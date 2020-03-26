@@ -1,0 +1,24 @@
+<?php namespace {{namespace}};
+
+use Andesite\Codex\Form\AdminDescriptor;
+use Andesite\Codex\Form\DataProvider\GhostDataProvider;
+use Andesite\Codex\Form\Field;
+use Andesite\Codex\Interfaces\DataProviderInterface;
+
+/**
+{{annotations}}
+ */
+abstract class {{name}}GhostCodexHelper extends AdminDescriptor{
+
+
+{{fields}}
+
+	public function __construct(){
+{{fieldConstructors}}
+	}
+
+	protected function createDataProvider(): DataProviderInterface{
+		return new GhostDataProvider(\{{ghost}}::class);
+	}
+
+}
