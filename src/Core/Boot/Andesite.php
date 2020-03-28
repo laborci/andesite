@@ -68,7 +68,7 @@ class Andesite{
 		ModuleManager::setConfigs($moduleConfigs);
 
 		/* Run Startup */
-		foreach ($startup as $module => $moduleConfig) ModuleManager::register($module, $moduleConfig);
+		if(is_array($startup)) foreach ($startup as $module => $moduleConfig) ModuleManager::register($module, $moduleConfig);
 		ModuleManager::load();
 
 
