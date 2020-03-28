@@ -22,10 +22,10 @@ class GhostGenerator{
 	/** @var SymfonyStyle */
 	protected $style;
 
-	public function __invoke($ghostManager, SymfonyStyle $style = null){
-		$this->ghosts = $ghostManager::Module()->getGhosts();
+	public function __invoke(SymfonyStyle $style = null){
+		$this->ghosts = GhostManager::Module()->getGhosts();
 		$this->style = is_null($style) ? new SymfonyStyle(new ArgvInput(), new DummyOutput()) : $style;
-		$this->ghostNamespace = $ghostManager::Module()->getNamespace();
+		$this->ghostNamespace = GhostManager::Module()->getNamespace();
 		$this->ghostPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($this->ghostNamespace));
 		$this->style->title('GHOST CREATOR');
 
@@ -35,7 +35,7 @@ class GhostGenerator{
 			$this->style->section($name);
 			$exists = $this->generateEntity($name, $table);
 			$this->generateGhostFromDatabase($name, $table, $database);
-			if($exists) $this->updateGhost($name);
+			if ($exists) $this->updateGhost($name);
 
 		}
 		$this->style->success('done.');

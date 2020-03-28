@@ -7,10 +7,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Andesite\GhostGenerator\GhostGenerator;
 
-class Ghost extends CliModule {
+class Ghost extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class($config) extends Command{
+		return new class( $config ) extends Command{
 
 			private $config;
 
@@ -19,19 +19,16 @@ class Ghost extends CliModule {
 				$this->config = $config;
 			}
 
-			protected function configure() {
+			protected function configure(){
 				$this
 					->setName('ghost')
-					->setDescription('Creates ghost entities')
-				;
+					->setDescription('Creates ghost entities');
 			}
 
-			protected function execute(InputInterface $input, OutputInterface $output) {
-				GhostGenerator::Service()($this->config['ghost-manager'], new SymfonyStyle($input, $output));
+			protected function execute(InputInterface $input, OutputInterface $output){
+				GhostGenerator::Service()(new SymfonyStyle($input, $output));
 			}
 		};
 	}
-
-
 
 }
