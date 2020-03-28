@@ -70,7 +70,7 @@ class Comparison{
 				$sql = " LIKE {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_IN_STRING:
-				$sql = " LIKE '%{$this->quoteValue($this->value, $connection)}%'";
+				$sql = " LIKE '%{$this->quoteValue($this->value, $connection, false)}%'";
 				break;
 			case self::OPERATOR_STARTS:
 				$sql = " LIKE '%{$this->quoteValue($this->value, $connection, false)}''";

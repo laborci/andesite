@@ -8,7 +8,6 @@ class CodexInfo extends Responder{
 			'urlBase'=> $this->formDecorator->getUrl(),
 			'list'   => $this->adminDescriptor->getListHandler(),
 		];
-		dump($info);
 		return $info;
 	}
 }

@@ -23,7 +23,15 @@ class GhostDataProvider implements DataProviderInterface{
 
 	public function convertItem($item): array{
 		/** @var Ghost $item */
-		return $item->export();
+		$data = $item->export();
+
+		foreach(get_class($item)::$model->getters as $virtual=>$descriptor) if($descriptor['type'] !== 'attachment'){
+			$value = $item->$virtual;
+			if(is_array($value)) $data[$virtual] = 'Array';
+			else if(is_object($value) && !method_exists($value, '__toString')) $data[$virtual] = 'Object';
+			else $data[$virtual] = strval($value);
+		}
+		return $data;
 	}
 
 	public function createFilter($filter=null){ return null; }

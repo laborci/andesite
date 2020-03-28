@@ -93,7 +93,6 @@ class ExtractApi extends CliModule{
 					$endpointMethods[$key] = $endpointMethod;
 				}
 
-				dump($endpointMethods);
 				$keys = array_keys($endpointMethods);
 				$m = [];
 				foreach ($keys as $key){

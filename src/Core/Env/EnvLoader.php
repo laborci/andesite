@@ -10,7 +10,8 @@ class EnvLoader implements SharedService{
 
 	public function checkCache($rebuild = false){
 		$cacheFile = getenv('env-file');
-		if (!file_exists($cacheFile)) return false;
+		if (!file_exists($cacheFile) && !$rebuild) return false;
+
 		$latestBuild = filemtime($cacheFile);
 		$dir = new \RecursiveDirectoryIterator(getenv('ini-path'));
 		$iterator = new \RecursiveIteratorIterator($dir);
