@@ -1,11 +1,31 @@
 <?php namespace Andesite\Codex\Form\DataProvider;
 
+use Andesite\DBAccess\Connection\Filter\Filter;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Andesite\Codex\Interfaces\DataProviderInterface;
 use Andesite\Codex\Interfaces\ItemDataImporterInterface;
 use Andesite\Ghost\Ghost;
 
 class GhostDataProvider implements DataProviderInterface{
+
+
+	/** @var callable null */
+	protected $baseFilter = null;
+	public function setBaseFilter(callable $filterFunc){
+		$this->baseFilter = $filterFunc;
+	}
+	/** @var callable null */
+	protected $searchFilter = null;
+	public function setSearchFilter(callable $filterFunc){
+		$this->searchFilter = $filterFunc;
+	}
+
+	protected $fieldConverters = [];
+	public function addFieldConverter($field, $method = null){
+		if(is_null($method)) $method = $field;
+		if(is_string($method)) $method = function ($item) use ($method){ return $item->$method; };
+		$this->fieldConverters[$field] = $method;
+	}
 
 	protected $ghost;
 	/** @var \Andesite\Ghost\Model model */
@@ -24,10 +44,21 @@ class GhostDataProvider implements DataProviderInterface{
 	public function convertItem($item): array{
 		/** @var Ghost $item */
 		$data = $item->export();
+		foreach ($this->fieldConverters as $field=>$converter){
+			$data[$field] = $converter($item);
+		}
 		return $data;
 	}
 
-	public function createFilter($filter=null){ return null; }
+
+
+
+	public function createFilter($filter = null){
+		$baseFilter = $this->baseFilter ? ($this->baseFilter)($filter) : null;
+		$searchFilter = $this->searchFilter ? ($this->searchFilter)($filter) : null;
+		if(is_null($searchFilter) && is_null($baseFilter)) return null;
+		return Filter::where($baseFilter)->and($searchFilter);
+	}
 
 	public function getItem($id): ?Ghost{ return $this->model->repository->pick($id); }
 

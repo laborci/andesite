@@ -48,7 +48,8 @@ abstract class CodexMission extends WebMission{
 		$cw = new CodeFinder();
 		$classes = $cw->Psr4ClassSeeker($namespace);
 		foreach ($classes as $class){
-			$registry->registerForm($class);
+			$reflection = new \ReflectionClass($class);
+			if (!$reflection->isAbstract()) $registry->registerForm($class);
 		}
 	}
 
