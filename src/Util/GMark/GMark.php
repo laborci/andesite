@@ -1,4 +1,4 @@
-<?php namespace Andesite\Util\GMark;
+<?php namespace Application\Service;
 
 use Minime\Annotations\Reader;
 
@@ -16,44 +16,61 @@ abstract class GMark{
 		$methods = $reflector->getMethods();
 
 		foreach ($methods as $method){
-			$annotations = ($annotationReader->getMethodAnnotations(get_called_class(), $method->getName()));
+			$annotations = ( $annotationReader->getMethodAnnotations(get_called_class(), $method->getName()) );
 
 			if ($annotations->has('GMark')){
-				if ($annotations->has('default')){
-					$this->defaultBlockMethod = $method->name;
-				}elseif ($annotations->has('command')){
-					$attrType = $method->getParameters()[1]->getType()->getName();
-					if ($attrType !== 'array' and $attrType !== 'string'){
-						throw new \Exception('GMarkParser ' . $method->name . ' argument $attr type must be string or array, ' . $attrType . ' given.');
-					}
-					if ($annotations->has('required-attributes')){
-						$requiredAttributes = $annotations->getAsArray('required-attributes');
-					}else{
-						$requiredAttributes = [];
-					}
-					$commands = $annotations->getAsArray('command');
-					if (is_string($commands)) $commands = [$commands];
-					foreach ($commands as $command){
-						$command = trim($command);
-						[$command, $as] = array_pad(preg_split('/\s+as\s+/', $command, 2), 2, null);
-						$as = $as ? $as : $command;
-						$this->commands[$command] = [
-							'method'             => $method->name,
-							'as'                 => $as,
-							'requiredAttributes' => $requiredAttributes,
-							'attrType'           => $attrType,
-						];
-					}
+				$command = $annotations->get('GMark');
+				$params = $method->getParameters();
+				$attributes = [];
+				array_shift($params);
+				array_shift($params);
+				foreach ($params as $param){
+
+					$attribute = [
+						'name'     => $param->name,
+						'required' => !$param->isOptional(),
+						'default'  => $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null,
+					];
+					if ($annotations->has($param->name . '-options')) $attribute['options'] = $annotations->getAsArray($param->name . '-options');
+
+					$attributes[] = $attribute;
 				}
+
+				$this->commands[$command] = [
+					'method'      => $method->name,
+					'as'          => $command,
+					'attributes'  => $attributes,
+					'body'        => !$annotations->has('nobody'),
+					'description' => $annotations->has('description') ? $annotations->get('description') : $command,
+					'icon'        => $annotations->has('icon') ? $annotations->get('icon') : '',
+				];
+
 			}
 		}
+		//dump($this->commands);
 	}
 
 	public function parse($string){
 		$string = preg_replace("/[\r\n]{2,}/", "\n\n", trim($string));
-		$blocks = explode("\n\n", $string);
+		$parts = explode("\n\n", $string);
+		$blocks = [];
+
+		foreach ($parts as $part){
+			$block = $this->parseBlock(trim($part));
+			if (is_null($block['command']) && count($blocks)){
+				$blocks[count($blocks) - 1]['body'] .= "\n\n" . $block['body'];
+			}else{
+				$blocks[] = $block;
+			}
+		}
 		$output = [];
-		foreach ($blocks as $block) $output[] = $this->parseBlock(trim($block));
+
+		foreach ($blocks as $block){
+			if (!is_null($block['command'])){
+				$method = $block['command']['method'];
+				$output[] = $this->$method($block['command']['as'], $block['body'], ...$block['params']);
+			}
+		}
 		return $this->joinBlocks($output);
 	}
 
@@ -66,31 +83,47 @@ abstract class GMark{
 		if (array_key_exists($command, $this->commands)){
 			$command = $this->commands[$command];
 
-			$method = $command['method'];
 			[$commandLine, $body] = array_pad(explode("\n", $block, 2), 2, null);
 			$attr = trim(array_pad(preg_split('/\s+/', $commandLine, 2), 2, null)[1]);
-			if ($command['attrType'] === 'array'){
-				try{
-					$attr = $this->parseAttributes($attr);
-				}catch (\Throwable $exception){
-					return '<error>ATTRIBUTES COULD NOT BE PARSED in line: ' . $commandLine . '</error>';
-				}
-				foreach ($command['requiredAttributes'] as $requiredAttribute){
-					if (!array_key_exists($requiredAttribute, $attr)){
-						return '<error>ATTRIBUTE ' . $requiredAttribute . ' MISSING in line: ' . $commandLine . '</error>';
-					}
-				}
+			try{
+				$attrs = $this->parseAttributes($attr);
+			}catch (\Throwable $exception){
+				return [
+					"command" => null,
+					"params"  => [],
+					"body"    => '!!! ATTRIBUTES COULD NOT BE PARSED in line: ' . $commandLine,
+				];
 			}
-			return $this->$method($body ? $body : '', $attr, $command['as']);
-		}elseif ($this->defaultBlockMethod){
-			$method = $this->defaultBlockMethod;
-			return $this->$method($block);
+			$params = [];
+			foreach ($command['attributes'] as $attribute){
+				if ($attribute['required'] && !array_key_exists($attribute['name'], $attrs)){
+					return [
+						"command" => null,
+						"params"  => [],
+						"body"    => '!!! ATTRIBUTE ' . $attribute['name'] . ' MISSING in line: ' . $commandLine,
+					];
+				}
+				$params[] = array_key_exists($attribute['name'], $attrs) ? $attrs[$attribute['name']] : $attribute['default'];
+			}
+
+			return [
+				'command' => $command,
+				'body'    => $body ? $body : '',
+				'params'  => $params,
+			];
+		}else{
+			return [
+				'command' => null,
+				'body'    => $block,
+				'params'  => [],
+			];
 		}
-		return '';
 	}
 
 	private function parseAttributes($attributes){
 		$x = (array)new \SimpleXMLElement("<element $attributes />");
 		return current($x);
 	}
+
+	public function getCommands(){ return $this->commands; }
 }
