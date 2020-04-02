@@ -52,7 +52,7 @@ class Model{
 		if ($getter === true) $getter = 'get' . ucfirst($field);
 		if ($setter === true || $setter === null) $setter = 'set' . ucfirst($field);
 		if ($getter !== false) $this->getters[$field] = ['type' => 'virtual', 'method' => $getter];
-		if ($setter !== false) $this->setters[$field] = ['method' => $getter];
+		if ($setter !== false) $this->setters[$field] = ['method' => $setter];
 		$this->fields[$field]->protect($getter, $setter);
 	}
 
@@ -65,7 +65,7 @@ class Model{
 		if ($getter === true) $getter = 'get' . ucfirst($field);
 		if ($setter === true || $setter === null) $setter = 'set' . ucfirst($field);
 		if ($getter !== false) $this->getters[$field] = ['type' => 'virtual', 'method' => $getter];
-		if ($setter !== false) $this->setters[$field] = ['method' => $getter];
+		if ($setter !== false) $this->setters[$field] = ['method' => $setter];
 		$this->virtuals[$field] = ['setter' => $setter, 'getter' => $getter, 'name' => $field, 'type'=>$type];
 	}
 
