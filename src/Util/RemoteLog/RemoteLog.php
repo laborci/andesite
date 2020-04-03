@@ -138,8 +138,7 @@ class RemoteLog implements SharedService{
 		return "";
 	}
 
-	static function loadFacade(){
-		include_once 'dump.php';
-	}
+	static function loadFacade(){		include_once 'dump.php';}
+	static function loadFakeFacade(){		include_once 'dump-fake.php';}
 }
 
