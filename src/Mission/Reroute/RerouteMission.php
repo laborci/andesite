@@ -7,6 +7,6 @@ class RerouteMission extends Mission{
 
 	protected $config;
 	protected function run($config){
-		die(header('location:' . Request::createFromGlobals()->getScheme() . '://' . $this->config['reroute']));
+		die(header('location:' . Request::createFromGlobals()->getScheme() . '://' . $config['reroute']));
 	}
 }
