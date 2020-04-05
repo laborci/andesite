@@ -13,7 +13,7 @@ use Minime\Annotations\Reader;
 class GhostManager extends Module{
 
 	/** @var \Minime\Annotations\Reader */
-	private Reader $reader;
+	private $reader;
 	private $ghosts = [];
 	private $decorator;
 	private $namespace;

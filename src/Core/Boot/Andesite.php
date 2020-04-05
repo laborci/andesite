@@ -16,6 +16,9 @@ class Andesite{
 	use Service;
 
 	private $mission;
+	private $devmode = false;
+
+	public function isDevMode(){ return $this->devmode; }
 
 	public static function mission(): Mission{
 		/** @var Mission $mission */
@@ -55,6 +58,8 @@ class Andesite{
 		$missions = $env->get('sys.missions');
 		$startup = $env->get('sys.startup');
 
+		$this->devmode = $env->get('sys.devmode');
+
 		/* Setup running environment */
 		date_default_timezone_set($timezone);
 		ob_start();
@@ -68,10 +73,8 @@ class Andesite{
 		ModuleManager::setConfigs($moduleConfigs);
 
 		/* Run Startup */
-		if(is_array($startup)) foreach ($startup as $module => $moduleConfig) ModuleManager::register($module, $moduleConfig);
+		if (is_array($startup)) foreach ($startup as $module => $moduleConfig) ModuleManager::register($module, $moduleConfig);
 		ModuleManager::load();
-
-
 
 		/* Load Modules */
 		foreach ($modules as $module => $moduleConfig) ModuleManager::register($module, $moduleConfig);
