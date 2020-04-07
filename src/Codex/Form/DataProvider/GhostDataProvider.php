@@ -26,6 +26,11 @@ class GhostDataProvider implements DataProviderInterface{
 		if(is_string($method)) $method = function ($item) use ($method){ return $item->$method; };
 		$this->fieldConverters[$field] = $method;
 	}
+	
+	protected $fieldImporters = [];
+	public function addFieldImporter($method){
+		$this->fieldImporters[] = $method;
+	}
 
 	protected $ghost;
 	/** @var \Andesite\Ghost\Model model */
@@ -83,6 +88,9 @@ class GhostDataProvider implements DataProviderInterface{
 	public function importItemData($item, $data){
 		/** @var Ghost $item */
 		$item->import($data);
+		foreach ($this->fieldImporters as $importer){
+			$importer($item, $data);
+		}
 		return $item;
 	}
 

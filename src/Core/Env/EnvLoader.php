@@ -1,6 +1,7 @@
 <?php namespace Andesite\Core\Env;
 
 use Andesite\Core\ServiceManager\SharedService;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 use Andesite\Util\DotArray\DotArray;
 
@@ -107,15 +108,24 @@ class EnvLoader implements SharedService{
 		$ini_local = getenv('ini-path') . $file . '.local.yml';
 
 		$values = $default;
-		$loaded = Yaml::parseFile($ini_file);
-		if (is_array($loaded)) $values = array_replace_recursive($values, $loaded);
-		if (file_exists($ini_ext)){
-			$loaded = Yaml::parseFile($ini_ext);
+
+		try{
+			$file = $ini_file;
+			$loaded = Yaml::parseFile($file);
+
 			if (is_array($loaded)) $values = array_replace_recursive($values, $loaded);
-		}
-		if (file_exists($ini_local)){
-			$loaded = Yaml::parseFile($ini_local);
-			if (is_array($loaded)) $values = array_replace_recursive($values, $loaded);
+			if (file_exists($ini_ext)){
+				$file = $ini_ext;
+				$loaded = Yaml::parseFile($ini_ext);
+				if (is_array($loaded)) $values = array_replace_recursive($values, $loaded);
+			}
+			if (file_exists($ini_local)){
+				$file = $ini_local;
+				$loaded = Yaml::parseFile($ini_local);
+				if (is_array($loaded)) $values = array_replace_recursive($values, $loaded);
+			}
+		}catch (ParseException $e){
+			throw new \Exception($e->getMessage() . ' - in [[[' . $file . ']]] (' . $e->getParsedLine() . ')');
 		}
 		foreach ($values as $key => $value) DotArray::set($env, $key, $value);
 		$env = DotArray::flatten($env);
@@ -124,7 +134,7 @@ class EnvLoader implements SharedService{
 		foreach ($env as $key => $value){
 			if (substr($key, -1) === '@' && substr($value, -1) === '*'){
 				$files = glob(getenv('ini-path') . $value . '.yml');
-				$value = dirname($value).'/';
+				$value = dirname($value) . '/';
 				foreach ($files as $file) if (substr($file, -8, 4) !== '.ext' && substr($file, -10, 6) !== '.local'){
 					$env = $this->array_splice_after_key($env, $key, [trim(substr($key, 0, -1)) . '.' . basename($file, '.yml') . ' @' => $value . basename($file, '.yml')]);
 				}

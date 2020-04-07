@@ -24,8 +24,6 @@ class ConnectionFactory extends Module{
 			$connection = null;
 			if (array_key_exists($name, $this->config['databases'])){
 				$connection = $this->factory($this->config['databases'][$name]);
-				$sqlHook = ServiceContainer::get(SqlLogHookInterface::class);
-				if (!is_null($sqlHook)) $connection->setSqlLogHook($sqlHook);
 			}
 			$this->connections[$name] = $connection;
 		}

@@ -1,28 +1,24 @@
 <?php namespace Andesite\Util\RemoteLog;
 
 use Andesite\Core\ServiceManager\ServiceContainer;
-use Andesite\Core\ServiceManager\SharedService;
+use Andesite\DBAccess\Connection\SqlLogInterface;
+use Andesite\Util\Dumper\DumpInterface;
+use Andesite\Util\ErrorHandler\ExceptionHandlerInterface;
+use Andesite\Util\ErrorHandler\FatalErrorHandlerInterface;
+
 use Symfony\Component\HttpFoundation\Request;
 
-class RemoteLog implements SharedService{
+class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface, DumpInterface, SqlLogInterface{
 
-	protected $host;
-	protected $guid;
+	protected $address;
+	protected $requestId;
 
-	public function __construct($host){
-		$this->host = $host . '/';
-		$this->guid = uniqid();
-		$this->registerErrorHandlers();
+	public function __construct($address, $requestId){
+		$this->address = $address . '/';
+		$this->requestId = $requestId;
 	}
 
-	public function registerErrorHandlers(){
-		error_reporting(E_ALL ^ E_DEPRECATED);
-		set_exception_handler([$this, 'handleException']);
-		set_error_handler(function ($severity, $message, $file, $line){ throw new \ErrorException($message, $severity, $severity, $file, $line); });
-		register_shutdown_function([$this, 'shutdownFatalErrorHandler']);
-	}
-
-	public function shutdownFatalErrorHandler(){
+	public function handleFatalError(){
 		$error = error_get_last();
 		if ($error !== null){
 			$this->log('error', [
@@ -64,15 +60,14 @@ class RemoteLog implements SharedService{
 		}
 	}
 
-	public function __invoke($data){ $this->log('info', $data); }
 	public function dump($data){ $this->log('info', $data); }
-	public function sql($sql){ $this->log('sql', $sql); }
+	public function logSql($sql){ $this->log('sql', $sql); }
 
 	protected function log($type, $message){
 		$request = ServiceContainer::get(Request::class);
-		$this->post_without_wait($this->host, [
+		$this->post_without_wait($this->address, [
 			'request' => [
-				'id'     => $this->guid,
+				'id'     => $this->requestId,
 				'method' => $request->getMethod(),
 				'host'   => $request->getHost(),
 				'path'   => $request->getPathInfo(),
@@ -138,7 +133,5 @@ class RemoteLog implements SharedService{
 		return "";
 	}
 
-	static function loadFacade(){		include_once 'dump.php';}
-	static function loadFakeFacade(){		include_once 'dump-fake.php';}
 }
 

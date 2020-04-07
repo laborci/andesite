@@ -1,5 +1,6 @@
 <?php namespace Andesite\DBAccess\Connection;
 
+use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\Filter\FilterBuilder;
 
 class PDOConnection extends \PDO{
@@ -20,14 +21,14 @@ class PDOConnection extends \PDO{
 		$this->passwd = $passwd;
 		$this->options = $options;
 		parent::__construct($dsn, $username, $passwd, $options);
+		$this->sqlLogger = ServiceContainer::get(SqlLogInterface::class);
 	}
 
-	/** @var SqlLogHookInterface */
-	protected $sqlLogHook;
-	public function setSqlLogHook($hook){ $this->sqlLogHook = $hook; }
+	/** @var SqlLogInterface */
+	protected $sqlLogger;
 
 	public function query($statement, $mode = \PDO::ATTR_DEFAULT_FETCH_MODE, $arg3 = null, array $ctorargs = []){
-		if (!is_null($this->sqlLogHook)) $this->sqlLogHook->log($statement);
+		if (!is_null($this->sqlLogger)) $this->sqlLogger->logSql($statement);
 		return parent::query($statement);
 	}
 

@@ -17,8 +17,10 @@ class Andesite{
 
 	private $mission;
 	private $devmode = false;
+	private $requestId;
 
 	public function isDevMode(){ return $this->devmode; }
+	public function getRequestId(){ return $this->requestId; }
 
 	public static function mission(): Mission{
 		/** @var Mission $mission */
@@ -38,6 +40,8 @@ class Andesite{
 	}
 
 	public function __construct(){
+
+		$this->requestId = uniqid();
 
 		/* Register Andesite service */
 		ServiceContainer::value(Andesite::class, $this);
@@ -59,6 +63,9 @@ class Andesite{
 		$startup = $env->get('sys.startup');
 
 		$this->devmode = $env->get('sys.devmode');
+		if ($env->get('sys.error-reporting')){
+			error_reporting($env->get('sys.error-reporting'));
+		}
 
 		/* Setup running environment */
 		date_default_timezone_set($timezone);
