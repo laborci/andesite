@@ -9,25 +9,18 @@ class EnvLoader implements SharedService{
 
 	protected $env = [];
 
-	public function checkCache($rebuild = false){
+	public function rebuildCache($force = false){
 		$cacheFile = getenv('env-file');
-		if (!file_exists($cacheFile) && !$rebuild) return false;
-
 		$latestBuild = @filemtime($cacheFile);
 		$dir = new \RecursiveDirectoryIterator(getenv('ini-path'));
 		$iterator = new \RecursiveIteratorIterator($dir);
 		foreach ($iterator as $fileinfo){
 			if ($fileinfo->getMTime() > $latestBuild){
-				if ($rebuild) $this->rebuild();
+				file_put_contents($cacheFile, "<?php return " . var_export($this->load(), true) . ';');
 				return false;
 			}
 		}
 		return true;
-	}
-
-	protected function rebuild(){
-		$content = "<?php return " . var_export($this->load(), true) . ';';
-		file_put_contents(getenv('env-file'), $content);
 	}
 
 	protected function load(){

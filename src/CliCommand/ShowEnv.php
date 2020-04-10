@@ -3,7 +3,6 @@
 use Andesite\Core\Env\Env;
 use Andesite\Mission\Cli\CliModule;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -28,6 +27,10 @@ class ShowEnv extends CliModule{
 			}
 
 			protected function execute(InputInterface $input, OutputInterface $output){
+
+				Env::Service()->reload();
+				
+				
 				$style = new SymfonyStyle($input, $output);
 				$arr = array_filter(Env::Service()->get(), function ($key){ return strpos($key, '.') === false; }, ARRAY_FILTER_USE_KEY);
 				//$arr = DotArray::flatten($arr);

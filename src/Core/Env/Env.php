@@ -1,6 +1,8 @@
 <?php namespace Andesite\Core\Env;
 
+use Andesite\Core\Boot\Andesite;
 use Andesite\Core\ServiceManager\Service;
+use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Core\ServiceManager\SharedService;
 use Andesite\Util\DotArray\DotArray;
 
@@ -11,7 +13,13 @@ class Env implements SharedService {
 	protected $env = [];
 
 	public function __construct(EnvLoader $envLoader){
-		$envLoader->checkCache(true);
+		if(Andesite::Service()->isDevMode()) $envLoader->rebuildCache(false);
+		$this->load(getenv('env-file'));
+	}
+
+	public function reload($force = false){
+		$envLoader = ServiceContainer::get(EnvLoader::class);
+		$envLoader->rebuildCache($force);
 		$this->load(getenv('env-file'));
 	}
 

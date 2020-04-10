@@ -48,6 +48,9 @@ class Andesite{
 
 		/** @var Env $env */
 		$env = ServiceContainer::get(Env::class);
+		if($env->get('sys.devmode')) $env->reload();
+
+		$this->devmode = $env->get('sys.devmode');
 
 		/* Setup env */
 		$env->set('root', getenv('root'));
@@ -61,11 +64,6 @@ class Andesite{
 		$context = $env->get('sys.context');
 		$missions = $env->get('sys.missions');
 		$startup = $env->get('sys.startup');
-
-		$this->devmode = $env->get('sys.devmode');
-		if ($env->get('sys.error-reporting')){
-			error_reporting($env->get('sys.error-reporting'));
-		}
 
 		/* Setup running environment */
 		date_default_timezone_set($timezone);
