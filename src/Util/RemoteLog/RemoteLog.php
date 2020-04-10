@@ -42,7 +42,7 @@ class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface
 			array_shift($trace);
 			$this->sender->log('error', [
 				'type'       => $type,
-				'errorlevel' => $this->friendlyErrorType($ftrace['args'][0]),
+				'errorlevel' => array_key_exists('args', $ftrace) ? $this->friendlyErrorType($ftrace['args'][0]) : 'E_ERROR',
 				'message'    => $message,
 				'file'       => $file,
 				'line'       => $line,
