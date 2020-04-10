@@ -55,6 +55,8 @@ class AttachmentStorage{
 		if (is_null($this->metaDBConnection)){
 			if (!file_exists($this->metaFile)){
 				$connection = new SQLite3($this->metaFile);
+				$connection->busyTimeout(5000);
+				$connection->exec('PRAGMA journal_mode = wal;');
 				$connection->exec("
 						begin;
 						create table file
@@ -73,7 +75,10 @@ class AttachmentStorage{
 						commit;");
 				$connection->close();
 			}
-			$this->metaDBConnection = new SQLite3($this->metaFile);
+			$connection = new SQLite3($this->metaFile);
+			$connection->busyTimeout(5000);
+			$connection->exec('PRAGMA journal_mode = wal;');
+			$this->metaDBConnection = $connection;
 		}
 		return $this->metaDBConnection;
 	}
