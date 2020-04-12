@@ -32,6 +32,7 @@ class Thumbnail{
 		$this->urlBase = $config['url'];
 		$this->path = $config['path'];
 		$this->secret = $config['secret'];
+		$this->jpegQuality = $config['jpeg-quality'] ?? 80;
 
 		if (strpos($file->getPath(), $this->sourcePath) !== 0) throw new SourceFileNotFound();
 		$this->pathId = str_replace('/', '-', substr(trim($file->getPath(), '/'), strlen($this->sourcePath)));
@@ -136,13 +137,13 @@ class Thumbnail{
 
 	public function exportPng(){ return $this->thumbnail('png'); }
 
-	public function exportJpg(int $quality = 66){
-		$this->jpegQuality = $quality;
+	public function exportJpg(int $quality = null){
+		if(!is_null($quality)) $this->jpegQuality = $quality;
 		return $this->thumbnail('jpg');
 	}
 
-	public function export(int $quality = 66){
-		$this->jpegQuality = $quality;
+	public function export(int $quality = null){
+		if(!is_null($quality)) $this->jpegQuality = $quality;
 		$fileinfo = pathinfo($this->file);
 		$ext = strtolower($fileinfo['extension']);
 		if ($ext == 'jpeg')
