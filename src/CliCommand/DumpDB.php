@@ -1,6 +1,7 @@
 <?php namespace Andesite\CliCommand;
 
 use Andesite\DBAccess\ConnectionFactory;
+use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,7 +13,7 @@ class DumpDB extends CliModule{
 
 	protected function createCommand($config): Command{
 
-		return new class( 'dump-db' ) extends Command{
+		return new class( $config, 'generate:dump', 'dump', "Creates database dumps" ) extends CliCommand{
 
 			protected function configure(){
 				$this
@@ -21,10 +22,8 @@ class DumpDB extends CliModule{
 					->addOption("database", "db", InputOption::VALUE_REQUIRED, "Database name", "default");
 			}
 
-			protected function execute(InputInterface $input, OutputInterface $output){
-
-				$style = new SymfonyStyle($input, $output);
-
+			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
+			
 				$dumper = ConnectionFactory::Module()->getDumper($input->getOption('database'));
 
 				if ($input->getOption('structure') === false && $input->getOption('data') === false){

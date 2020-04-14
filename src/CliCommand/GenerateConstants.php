@@ -1,5 +1,6 @@
 <?php namespace Andesite\CliCommand;
 
+use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -11,21 +12,9 @@ use Andesite\Util\CodeFinder\CodeFinder;
 class GenerateConstants extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config ) extends Command{
+		return new class( $config, 'generate:constants', 'const', "Generates constants" ) extends CliCommand{
 
-			private $config;
-			public function __construct($config){
-				parent::__construct('generate-constants');
-				$this->config = $config;
-			}
-
-			protected function configure(){
-				$this->setAliases(['gc']);
-			}
-
-			protected function execute(InputInterface $input, OutputInterface $output){
-				$style = new SymfonyStyle($input, $output);
-
+			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 				$classes = array_key_exists('classes', $this->config) && is_array($this->config['classes']) ? $this->config['classes'] : [];
 
 				$cf = CodeFinder::Service();
@@ -40,7 +29,7 @@ class GenerateConstants extends CliModule{
 
 				foreach ($classes as $class){
 					if (is_subclass_of($class, Constant::class)){
-						$style->writeln('loading '.$class);
+						$style->writeln('loading ' . $class);
 						$class::generate();
 					}
 				}

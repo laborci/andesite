@@ -1,5 +1,6 @@
 <?php namespace Andesite\CliCommand;
 
+use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -10,23 +11,10 @@ use Andesite\GhostGenerator\GhostGenerator;
 class Ghost extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config ) extends Command{
+		return new class( $config, "generate:ghosts", 'ghost', 'Creates ghost entities') extends CliCommand{
 
-			private $config;
-
-			public function __construct($config){
-				parent::__construct();
-				$this->config = $config;
-			}
-
-			protected function configure(){
-				$this
-					->setName('ghost')
-					->setDescription('Creates ghost entities');
-			}
-
-			protected function execute(InputInterface $input, OutputInterface $output){
-				GhostGenerator::Service()(new SymfonyStyle($input, $output));
+			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
+				GhostGenerator::Service()($style);
 			}
 		};
 	}

@@ -1,6 +1,7 @@
 <?php namespace Andesite\CliCommand;
 
 use Andesite\Core\ServiceManager\ServiceContainer;
+use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Andesite\Util\CodeFinder\CodeFinder;
 use Andesite\Util\DotArray\DotArray;
@@ -15,24 +16,10 @@ class ExtractApi extends CliModule{
 
 	protected function createCommand($config): Command{
 
-		return new class( $config ) extends Command{
+		return new class( $config, 'generate:api-js', 'api', 'Extract web api-s to js') extends CliCommand{
 
-			private $config;
-
-			public function __construct($config){
-				parent::__construct('extract-api');
-				$this->config = $config;
-			}
-
-			protected function configure(){
-				$this
-					->setAliases(['ea'])
-					->setDescription('extract web api-s to js');
-			}
-
-			protected function execute(InputInterface $input, OutputInterface $output){
-				$style = new SymfonyStyle($input, $output);
-				$apis = $this->config;
+			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
+				$apis = $config;
 				foreach ($apis as $api) if (!empty($api['extract'])) $this->extract($api);
 				$style->success('done');
 			}

@@ -1,5 +1,6 @@
 <?php namespace Andesite\CliCommand;
 
+use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Andesite\Zuul\RoleManager\RoleManager;
 use Symfony\Component\Console\Command\Command;
@@ -10,20 +11,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class UpdateGroups extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class($config) extends Command{
-			private $config;
-			public function __construct($config){
-				parent::__construct('update-groups');
-				$this->config = $config;
-			}
+		return new class($config, 'update:groups', null, 'Updates user groups') extends CliCommand{
 
-			protected function configure(){
-				$this->setAliases(['ug']);
-			}
-
-			protected function execute(InputInterface $input, OutputInterface $output){
+			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 				$roleManager = RoleManager::Module();
-				$style = new SymfonyStyle($input, $output);
 				/** @var \Andesite\Ghost\Model $model */
 				$model = $this->config['user-ghost']::$model;
 
