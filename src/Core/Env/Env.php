@@ -4,7 +4,7 @@ use Andesite\Core\Boot\Andesite;
 use Andesite\Core\ServiceManager\Service;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Core\ServiceManager\SharedService;
-use Andesite\Util\DotArray\DotArray;
+use Andesite\Util\DotArray\Dot;
 
 class Env implements SharedService {
 
@@ -28,8 +28,8 @@ class Env implements SharedService {
 	public function get($key = null) {
 		if($key === null) return $this->env;
 		if(array_key_exists($key, $this->env)) return $this->env[$key];
-		return DotArray::get($this->env, $key, null);
+		return Dot::get($this->env, $key, null);
 	}
-	public function set($key, $value) { DotArray::set($this->env, $key, $value); }
+	public function set($key, $value) { Dot::set($this->env, $key, $value); }
 
 }

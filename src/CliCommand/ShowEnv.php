@@ -20,17 +20,21 @@ class ShowEnv extends CliModule{
 			}
 
 			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
-				Env::Service()->reload();
-				if($input->getArgument('key')){
+				Env::Service()->reload(true);
+				if ($input->getArgument('key')){
 					$env = Env::Service()->get($input->getArgument('key'));
 					$root = $input->getArgument('key');
 				}else{
 					$env = Env::Service()->get();
 					$root = 'env';
 				}
-				$arr = array_filter($env, function ($key){ return strpos($key, '.') === false; }, ARRAY_FILTER_USE_KEY);
-				ksort($arr);
-				ConsoleTree::draw($arr, $style, $root);
+				if (is_array($env)){
+					$arr = array_filter($env, function ($key){ return strpos($key, '.') === false; }, ARRAY_FILTER_USE_KEY);
+					ksort($arr);
+					ConsoleTree::draw($arr, $style, $root);
+				}else{
+					$style->success($env);
+				}
 			}
 		};
 	}

@@ -29,6 +29,12 @@ class DotArray{
 	protected static function exists($array, $key){ return ($array instanceof \ArrayAccess) ? $array->offsetExists($key) : array_key_exists($key, $array); }
 	protected static function value($value){ return $value instanceof \Closure ? $value() : $value; }
 
+	public static function tree($arr){
+		$values = [];
+		foreach ($arr as $key=>$value) $values[$key] = static::get($arr, $key);
+		return $values;
+	}
+
 	public static function flatten($arr){
 		$iterator = new \RecursiveIteratorIterator(
 			new \RecursiveArrayIterator($arr),

@@ -57,8 +57,8 @@ class Andesite{
 		$env->set('sys.context', getenv('context'));
 
 		$annotationReaderCache = $env->get('path.annotation-reader-cache');
-		$moduleAliases = $env->get('module.aliases');
-		$moduleConfigs = $env->get('module.configs');
+		$moduleAliases = $env->get('sys.module.aliases');
+		$moduleConfigs = $env->get('sys.module.configs');
 		$modules = $env->get('sys.modules');
 		$timezone = $env->get('sys.timezone');
 		$context = $env->get('sys.context');

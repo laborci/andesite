@@ -19,13 +19,26 @@ class GenerateConfig extends CliModule{
 			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 
 				$env = Env::Service();
-				$files = $this->config;
 				$loader = new FilesystemLoader();
 				$twig = new Environment($loader);
-				$loader->addPath($this->config['source'], '__main__');
+				$loader->addPath($config['source'], '__main__');
 
-				foreach ($this->config['translate'] as $template => $outfile){
-					$output = $twig->render($template . '.twig', $env->get());
+				foreach ($config['translate'] as $template => $outfile){
+					$output = $twig->render($template . '.twig', $config['data']);
+
+					$lines = explode("\n", $output);
+					$formattedLines = [];
+					$level = 0;
+					foreach ($lines as $line){
+						$line = trim($line);
+						if ($line !== ''){
+							if (substr($line, 0, 2) === "</") $level--;
+							$formattedLines[] = str_repeat("\t", $level) . $line;
+							if ($line[0] === '<' && $line[1] !== "/") $level++;
+						}
+					}
+					$output = join("\n", $formattedLines);
+
 					file_put_contents($outfile, $output);
 					$style->success($template . ' Done');
 				}

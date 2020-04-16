@@ -4,7 +4,7 @@ use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Andesite\Util\CodeFinder\CodeFinder;
-use Andesite\Util\DotArray\DotArray;
+use Andesite\Util\DotArray\Dot;
 use CaseHelper\CaseHelperFactory;
 use Minime\Annotations\Reader;
 use Symfony\Component\Console\Command\Command;
@@ -83,7 +83,7 @@ class ExtractApi extends CliModule{
 				$keys = array_keys($endpointMethods);
 				$m = [];
 				foreach ($keys as $key){
-					DotArray::set($m, $key, '{{' . $key . '}}');
+					Dot::set($m, $key, '{{' . $key . '}}');
 				}
 
 				foreach ($api['extract'] as $extract){
