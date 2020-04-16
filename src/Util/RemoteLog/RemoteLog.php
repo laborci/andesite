@@ -20,7 +20,7 @@ class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface
 	public function handleFatalError(){
 		$error = error_get_last();
 		if ($error !== null){
-			$this->log('error', [
+			$this->sender->log('error', [
 				'errorlevel' => $this->friendlyErrorType($error['type']),
 				'message'    => $error['message'],
 				'file'       => $error['file'],

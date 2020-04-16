@@ -1,5 +1,6 @@
 <?php namespace Andesite\Core\Env;
 
+use Andesite\Core\ServiceManager\Service;
 use Andesite\Core\ServiceManager\SharedService;
 use Andesite\Util\YmlPlus\Loader;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -7,6 +8,8 @@ use Symfony\Component\Yaml\Yaml;
 use Andesite\Util\DotArray\Dot;
 
 class EnvLoader implements SharedService{
+
+	use Service;
 
 	protected $env = [];
 

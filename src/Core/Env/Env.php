@@ -12,18 +12,20 @@ class Env implements SharedService {
 
 	protected $env = [];
 
-	public function __construct(EnvLoader $envLoader){
-		if(Andesite::Service()->isDevMode()) $envLoader->rebuildCache(false);
+	public function __construct(){
+		if(Andesite::Service()->isDevMode()) EnvLoader::Service()->rebuildCache(false);
 		$this->load(getenv('env-file'));
 	}
 
 	public function reload($force = false){
-		$envLoader = ServiceContainer::get(EnvLoader::class);
-		$envLoader->rebuildCache($force);
+		EnvLoader::Service()->rebuildCache($force);
 		$this->load(getenv('env-file'));
 	}
 
-	public function load($file) {$this->store(include $file);}
+	public function load($file) {
+		if(!file_exists($file)) EnvLoader::Service()->rebuildCache(true);
+		$this->store(include $file);
+	}
 	public function store($env) {$this->env = $env;}
 	public function get($key = null) {
 		if($key === null) return $this->env;
