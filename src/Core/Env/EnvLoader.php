@@ -28,14 +28,14 @@ class EnvLoader implements SharedService{
 		$loader = new Loader(getenv('ini-path'), ".local.yml");
 		return $loader->load(getenv('ini-file'), [
 			"root"                     => getenv('root'),
-			"path"                     => ["root" => getenv('root')],
-			"sys.missions @"           => "missions/*",
-			"sys.startup @"            => "~module/startup-modules",
-			"sys.modules @"            => "~module/base-modules",
-			"sys.module.aliases @"     => "~module/aliases",
-			"sys.module.configs @"     => "module/module-configs/*",
-			"cli/sys.module.configs @" => "module/cli-module-configs/*",
-			"path @"                   => "~config/path",
+//			"path"                     => ["root" => getenv('root')],
+//			"sys.missions @"           => "missions/*",
+//			"sys.startup @"            => "~module/startup-modules",
+//			"sys.modules @"            => "~module/base-modules",
+//			"sys.module.aliases @"     => "~module/aliases",
+//			"sys.module.configs @"     => "module/module-configs/*",
+//			"cli/sys.module.configs @" => "module/cli-module-configs/*",
+//			"path @"                   => "~config/path",
 		]);
 	}
 

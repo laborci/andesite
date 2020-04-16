@@ -1,4 +1,4 @@
-<?php namespace Application\Service;
+<?php namespace Andesite\Util\GMark;
 
 use Minime\Annotations\Reader;
 
@@ -47,7 +47,6 @@ abstract class GMark{
 
 			}
 		}
-		//dump($this->commands);
 	}
 
 	public function parse($string){
@@ -91,7 +90,7 @@ abstract class GMark{
 				return [
 					"command" => null,
 					"params"  => [],
-					"body"    => '!!! ATTRIBUTES COULD NOT BE PARSED in line: ' . $commandLine,
+					"body"    => 'ATTRIBUTES COULD NOT BE PARSED in line: ' . $commandLine,
 				];
 			}
 			$params = [];
@@ -100,7 +99,7 @@ abstract class GMark{
 					return [
 						"command" => null,
 						"params"  => [],
-						"body"    => '!!! ATTRIBUTE ' . $attribute['name'] . ' MISSING in line: ' . $commandLine,
+						"body"    => 'ATTRIBUTE ' . $attribute['name'] . ' MISSING in line: ' . $commandLine,
 					];
 				}
 				$params[] = array_key_exists($attribute['name'], $attrs) ? $attrs[$attribute['name']] : $attribute['default'];
