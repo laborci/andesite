@@ -26,7 +26,7 @@ class Dumper{
 		new Export($this->dumper);
 	}
 	public function structure($file){
-		$this->dumper->structure(true)->disableForeignKeyChecks(true)->data(true)->file($this->path.$file);
+		$this->dumper->structure(true)->disableForeignKeyChecks(true)->data(false)->file($this->path.$file);
 		new Export($this->dumper);
 	}
 	public function data($file){
