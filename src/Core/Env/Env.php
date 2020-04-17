@@ -27,7 +27,7 @@ class Env implements SharedService {
 		$this->store(include $file);
 	}
 	public function store($env) {$this->env = $env;}
-	public function get($key = null) {
+	public function get($key = null, $default = null) {
 		if($key === null) return $this->env;
 		if(array_key_exists($key, $this->env)) return $this->env[$key];
 		return Dot::get($this->env, $key, null);

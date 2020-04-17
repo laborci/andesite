@@ -22,12 +22,12 @@ class Dot{
 		return true;
 	}
 
-	public static function get(&$array, $key){
+	public static function get(&$array, $key, $default = null){
 		$path = explode('.', $key);
 		$value = $array;
 
 		foreach ($path as $segment){
-			if (!array_key_exists($segment, $value)) return null;
+			if (!array_key_exists($segment, $value)) return $default;
 			$value = $value[$segment];
 		}
 		return $value;

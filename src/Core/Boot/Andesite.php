@@ -58,11 +58,11 @@ class Andesite{
 
 		$annotationReaderCache = $env->get('path.annotation-reader-cache');
 		$moduleAliases = $env->get('sys.module.aliases');
-		$moduleConfigs = $env->get('sys.module.configs');
-		$modules = $env->get('sys.modules');
+		$moduleConfigs = $env->get('sys.module.configs', []);
+		$modules = $env->get('sys.modules', []);
 		$timezone = $env->get('sys.timezone');
 		$context = $env->get('sys.context');
-		$missions = $env->get('sys.missions');
+		$missions = $env->get('sys.missions', []);
 		$startup = $env->get('sys.startup');
 
 		/* Setup running environment */
