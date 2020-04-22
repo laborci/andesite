@@ -1,6 +1,7 @@
 <?php namespace Andesite\Ghost;
 
 use Andesite\Attachment\AttachmentCategory;
+use Symfony\Component\Validator\Constraint;
 
 class Decorator{
 
@@ -15,6 +16,7 @@ class Decorator{
 	public function belongsTo($target, $ghost, $field = null): Relation{ return $this->model->belongsTo($target, $ghost, $field); }
 	public function hasMany($target, $ghost, $field): Relation{ return $this->model->hasMany($target, $ghost, $field); }
 	public function hasAttachment($name): AttachmentCategory{ return $this->model->hasAttachment($name); }
+	public function addValidator($field, Constraint $validator){ return $this->model->addValidator($field, $validator); }
 	/**
 	 * @param string           $field
 	 * @param null|bool|string $getter false: no getter; null: passThrough; true: get'Field'() method; string: your method name

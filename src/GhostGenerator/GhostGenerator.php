@@ -11,6 +11,11 @@ use Application\Ghosts;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tests\Fixtures\DummyOutput;
+use Symfony\Component\Validator\Constraints\Choice;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotNull;
+use Symfony\Component\Validator\Constraints\PositiveOrZero;
+use Symfony\Component\Validator\Constraints\Type;
 
 class GhostGenerator{
 
@@ -157,29 +162,42 @@ class GhostGenerator{
 		$this->style->write("- ${database}");
 		/** @var \Andesite\DBAccess\Connection\PDOConnection $connection */
 		$connection = ConnectionFactory::Module()->get($database);
+
 		$smartAccess = $connection->createSmartAccess();
 		$this->style->writeln(" - [OK]");
 
 		$this->style->write("Fetching table information ");
 		$this->style->write("- ${table}");
-		$fields = $smartAccess->getFieldData($table);
+		//$fields = $smartAccess->getFieldData($table);
+		$schemafields = $smartAccess->getTableSchema($table);
+		/** @var \Andesite\GhostGenerator\DBField[] $fields */
+		$fields = [];
+
+		foreach ($schemafields as $field){
+			$fields[$field['COLUMN_NAME']] = new DBField($field);
+		}
 		$this->style->writeln(" - [OK]");
 
 		$constants = [];
 		$addFields = [];
 		$comparers = [];
 		$fieldConstants = [];
+		$validators = [];
+		$encoder = new \Riimu\Kit\PHPEncoder\PHPEncoder();
 		foreach ($fields as $field){
+
 			$options = null;
-			if (strpos($field['Type'], 'set') === 0 || strpos($field['Type'], 'enum') === 0){
-				$options = $smartAccess->getEnumValues($table, $field['Field']);
-				foreach ($options as $value){
-					$constants[] = "\t" . 'const V_' . $field['Field'] . '_' . $value . ' = "' . $value . '";';
+			if (is_array($field->options)){
+				foreach ($field->options as $value){
+					$constants[] = "\t" . 'const V_' . $field->name . '_' . $value . ' = "' . $value . '";';
 				}
 			}
-			$comparers[] = "\t\t" . "public static function f_" . $field['Field'] . "(){return new Comparison('" . $field['Field'] . "');}";
-			$addFields[] = "\t\t" . '$model->addField("' . $field['Field'] . '", ' . $this->fieldType($field, $field['Field']) . ',' . var_export($options, true) . ');';
-			$fieldConstants[] = "\t" . 'const F_' . $field['Field'] . ' = "' . $field['Field'] . '";';
+			$comparers[] = "\t\t" . "public static function f_" . $field->name . "(){return new Comparison('" . $field->name . "');}";
+			$addFields[] = "\t\t" . '$model->addField("' . $field->name . '", Field::TYPE_' . $field->fieldType . ',' . $encoder->encode($field->options, ['whitespace' => false]) . ');';
+			$fieldConstants[] = "\t" . 'const F_' . $field->name . ' = "' . $field->name . '";';
+			foreach ($field->validators as $validator){
+				$validators[] = "\t\t" . '$model->addValidator("' . $field->name . '", new \\' . $validator[0] . '(' . ( count($validator) > 1 ? $encoder->encode($validator[1], ['whitespace' => false]) : '' ) . '));';
+			}
 
 		}
 		$addFields[] = "\t\t" . '$model->protectField("id");';
@@ -191,6 +209,7 @@ class GhostGenerator{
 		$template = str_replace('{{connectionName}}', $database, $template);
 		$template = str_replace('{{namespace}}', $this->ghostNamespace, $template);
 		$template = str_replace('{{add-fields}}', join("\n", $addFields), $template);
+		$template = str_replace('{{validators}}', join("\n", $validators), $template);
 		$template = str_replace('{{constants}}', join("\n", $constants), $template);
 		$template = str_replace('{{fieldConstants}}', join("\n", $fieldConstants), $template);
 		$template = str_replace('{{comparers}}', join("\n", $comparers), $template);
@@ -219,35 +238,140 @@ class GhostGenerator{
 			return false;
 		}
 	}
+}
 
-	protected function fieldType($db_field, $fieldName){
+class DBField{
 
-		$dbtype = $db_field['Type'];
+	public $name;
+	public $type;
+	public $maxlength;
+	public $nullable;
+	public $default;
+	public $fieldType;
+	public $options = null;
+	public $phpType;
+	public $descriptor;
 
-		if ($db_field['Comment'] == 'json') return 'Field::TYPE_JSON';
-		if ($dbtype == 'tinyint(1)') return 'Field::TYPE_BOOL';
-		if ($dbtype == 'date') return 'Field::TYPE_DATE';
-		if ($dbtype == 'datetime') return 'Field::TYPE_DATETIME';
-		if ($dbtype == 'float') return 'Field::TYPE_FLOAT';
-		if (strpos($dbtype, 'int(11) unsigned') === 0 && ( substr($fieldName, -2) == 'Id' || $fieldName == 'id' || $db_field['Comment'] == 'id' )) return 'Field::TYPE_ID';
-		if (strpos($dbtype, 'int') === 0) return 'Field::TYPE_ID';
-		if (strpos($dbtype, 'tinyint') === 0) return 'Field::TYPE_INT';
-		if (strpos($dbtype, 'smallint') === 0) return 'Field::TYPE_INT';
-		if (strpos($dbtype, 'mediumint') === 0) return 'Field::TYPE_INT';
-		if (strpos($dbtype, 'bigint') === 0) return 'Field::TYPE_INT';
-		if (strpos($dbtype, 'json') === 0) return 'Field::TYPE_JSON';
-
-		if (strpos($dbtype, 'varchar') === 0) return 'Field::TYPE_STRING';
-		if (strpos($dbtype, 'char') === 0) return 'Field::TYPE_STRING';
-		if (strpos($dbtype, 'text') === 0) return 'Field::TYPE_STRING';
-		if (strpos($dbtype, 'text') === 0) return 'Field::TYPE_STRING';
-		if (strpos($dbtype, 'tinytext') === 0) return 'Field::TYPE_STRING';
-		if (strpos($dbtype, 'mediumtext') === 0) return 'Field::TYPE_STRING';
-		if (strpos($dbtype, 'longtext') === 0) return 'Field::TYPE_STRING';
-
-		if (strpos($dbtype, 'set') === 0) return 'Field::TYPE_SET';
-		if (strpos($dbtype, 'enum') === 0) return 'Field::TYPE_ENUM';
-		return '';
+	public function __construct($descriptor){
+		$this->descriptor = $descriptor;
+		$this->name = $descriptor['COLUMN_NAME'];
+		$this->type = $descriptor['DATA_TYPE'];
+		$this->maxlength = $descriptor['CHARACTER_MAXIMUM_LENGTH'];
+		$this->nullable = $descriptor['IS_NULLABLE'] === 'YES';
+		$this->default = $descriptor['COLUMN_DEFAULT'];
+		$this->fieldType = $this->getFieldType($descriptor);
+		$this->phpType = $this->getPhpType();
+		if ($this->fieldType === Field::TYPE_ENUM || $this->fieldType === Field::TYPE_SET){
+			preg_match_all("/'(.*?)'/", $descriptor['COLUMN_TYPE'], $matches);
+			$this->options = $matches[1];
+		}
+		$this->validators = $this->getValidators();
 	}
 
+	public function getValidators(){
+
+		$validators = [];
+
+		if (!$this->nullable) $validators[] = [NotNull::class];
+
+		switch ($this->fieldType){
+			case Field::TYPE_BOOL:
+				$validators[] = [Type::class, 'bool'];
+				break;
+			case Field::TYPE_DATE:
+				$validators[] = [Type::class, 'object'];
+				break;
+			case Field::TYPE_DATETIME:
+				$validators[] = [Type::class, 'object'];
+				break;
+			case Field::TYPE_STRING:
+				$validators[] = [Type::class, 'string'];
+				$validators[] = [Length::class, ['max' => $this->maxlength]];
+				break;
+			case Field::TYPE_ENUM:
+				$validators[] = [Type::class, 'string'];
+				$validators[] = [Choice::class, $this->options];
+				break;
+			case Field::TYPE_SET:
+				$validators[] = [Type::class, 'array'];
+				$validators[] = [Choice::class, ['multiple'=>true, 'choices'=>$this->options]];
+				break;
+			case Field::TYPE_INT:
+			case Field::TYPE_ID:
+				$validators[] = [Type::class, 'int'];
+				if (strpos($this->descriptor['COLUMN_TYPE'], 'unsigned') !== false){
+					$validators[] = [PositiveOrZero::class];
+				}
+				break;
+			case Field::TYPE_FLOAT:
+				$validators[] = [Type::class, 'float'];
+				if (strpos($this->descriptor['COLUMN_TYPE'], 'unsigned') !== false){
+					$validators[] = [PositiveOrZero::class];
+				}
+				break;
+		}
+		return $validators;
+	}
+
+	public function getPhpType(){
+		switch ($this->fieldType){
+			case Field::TYPE_BOOL:
+				return 'boolean';
+			case Field::TYPE_DATE:
+				return '\Valentine\Date';
+			case Field::TYPE_DATETIME:
+				return '\DateTime';
+			case Field::TYPE_ENUM:
+			case Field::TYPE_STRING:
+				return 'string';
+			case Field::TYPE_SET:
+				return 'array';
+			case Field::TYPE_INT:
+			case Field::TYPE_ID:
+				return 'int';
+			case Field::TYPE_FLOAT:
+				return 'float';
+		}
+	}
+
+	public function getFieldType($descriptor): string{
+
+		if ($descriptor['COLUMN_COMMENT'] == 'json') return Field::TYPE_JSON;
+		if ($descriptor['COLUMN_TYPE'] == 'tinyint(1)') return Field::TYPE_BOOL;
+		if (strpos($descriptor['COLUMN_TYPE'], 'int(11) unsigned') === 0 && (
+				substr($descriptor['COLUMN_NAME'], -2) == 'Id' ||
+				$descriptor['COLUMN_NAME'] == 'id' ||
+				$descriptor['COLUMN_COMMENT'] == 'id'
+			)
+		) return Field::TYPE_ID;
+
+		switch ($descriptor['DATA_TYPE']){
+			case 'date':
+				return Field::TYPE_DATE;
+			case 'datetime':
+				return Field::TYPE_DATETIME;
+			case 'float':
+				return Field::TYPE_FLOAT;
+			case 'int':
+			case 'tinyint':
+			case 'smallint':
+			case 'tinyint':
+			case 'mediumint':
+			case 'bigint':
+				return Field::TYPE_INT;
+			case 'json':
+				return Field::TYPE_JSON;
+			case 'varchar':
+			case 'char':
+			case 'text':
+			case 'tinytext':
+			case 'mediumtext':
+			case 'longtext':
+				return Field::TYPE_STRING;
+			case 'set':
+				return Field::TYPE_SET;
+			case 'enum':
+				return Field::TYPE_ENUM;
+		}
+	}
 }

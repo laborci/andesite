@@ -2,7 +2,7 @@
 
 use Andesite\DBAccess\Connection\Filter\Filter;
 
-class SmartAccess {
+class SmartAccess{
 
 	/** @var PDOConnection */
 	private $connection;
@@ -29,7 +29,7 @@ class SmartAccess {
 		$row = $this->getRow($sql, ...$sqlParams);
 		return $row ? reset($row) : null;
 	}
-	public function getRow(string $sql, ...$sqlParams){ return $this->getFirstRow($sql . (stripos($sql, ' LIMIT ') === false ? ' LIMIT 1' : ''), ...$sqlParams); }
+	public function getRow(string $sql, ...$sqlParams){ return $this->getFirstRow($sql . ( stripos($sql, ' LIMIT ') === false ? ' LIMIT 1' : '' ), ...$sqlParams); }
 	protected function getFirstRow(string $sql, ...$sqlParams){ return $this->execute($sql, $sqlParams)->fetch(PDOConnection::FETCH_ASSOC); }
 	public function getRowById(string $table, int $id){ return $this->getRow("SELECT * FROM " . $this->escapeSQLEntity($table) . " WHERE id=" . $this->quote($id)); }
 
@@ -77,7 +77,7 @@ class SmartAccess {
 	#region escape & quote
 	public function buildSQL(string $sql, array $sqlParams = []): string{ return $this->connection->applySQLParameters($sql, $sqlParams); }
 
-	public function quote($subject, bool $quote = true): string{ return $subject === null ? 'NULL' : ($quote ? $this->connection->quote($subject) : trim($this->connection->quote($subject), "'")); }
+	public function quote($subject, bool $quote = true): string{ return $subject === null ? 'NULL' : ( $quote ? $this->connection->quote($subject) : trim($this->connection->quote($subject), "'") ); }
 	public function quoteArray(array $array, bool $quote = true): array{ return array_map(function ($val) use ($quote){ return $this->quote($val, $quote); }, $array); }
 	public function escapeSQLEntity($subject): string{ return '`' . $subject . '`'; }
 	public function escapeSQLEntities(array $array): array{ return array_map(function ($val){ return $this->escapeSQLEntity($val); }, $array); }
@@ -110,5 +110,7 @@ class SmartAccess {
 		preg_match_all("/'(.*?)'/", $this->getRows("DESCRIBE " . $this->escapeSQLEntity($table) . " " . $this->quote($field))[0]['Type'], $matches);
 		return $matches[1];
 	}
+
+	public function getTableSchema($table){ return $this->getRows('select * from information_schema.columns where table_name = "' . $table . '" and table_schema = "' . $this->getDatabase() . '"'); }
 	#endregion
 }

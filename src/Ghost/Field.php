@@ -4,16 +4,16 @@ use Valentine\Date;
 
 class Field{
 
-	const TYPE_BOOL = 'bool';
-	const TYPE_STRING = 'string';
-	const TYPE_INT = 'int';
-	const TYPE_ID = 'id';
-	const TYPE_DATE = 'date';
-	const TYPE_DATETIME = 'datetime';
-	const TYPE_ENUM = 'enum';
-	const TYPE_SET = 'set';
-	const TYPE_FLOAT = 'float';
-	const TYPE_JSON = 'json';
+	const TYPE_BOOL = 'BOOL';
+	const TYPE_STRING = 'STRING';
+	const TYPE_INT = 'INT';
+	const TYPE_ID = 'ID';
+	const TYPE_DATE = 'DATE';
+	const TYPE_DATETIME = 'DATETIME';
+	const TYPE_ENUM = 'ENUM';
+	const TYPE_SET = 'SET';
+	const TYPE_FLOAT = 'FLOAT';
+	const TYPE_JSON = 'JSON';
 
 	public $name;
 	public $type;
@@ -102,7 +102,6 @@ class Field{
 			case self::TYPE_SET:
 				return $value;
 			case self::TYPE_JSON:
-				if(is_array($value)) return $value;
 				return json_decode($value, true);
 		}
 		return $value;

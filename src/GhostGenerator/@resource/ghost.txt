@@ -34,6 +34,7 @@ abstract class {{name}}Ghost extends Ghost{
 	final static protected function createModel(): Model{
 		$model = new Model(get_called_class());
 {{add-fields}}
+{{validators}}
 		return $model;
 	}
 }

@@ -1,5 +1,6 @@
 <?php namespace Andesite\Ghost;
 
+use Andesite\Ghost\Exception\ValidationError;
 use JsonSerializable;
 use Andesite\Attachment\AttachmentOwnerInterface;
 use Andesite\Ghost\Exception\InsufficientData;
@@ -135,6 +136,8 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	}
 
 	public function save(){
+		$errors = $this->validate(false);
+		if(count($errors)) throw new ValidationError($errors);
 		if ($this->isExists()){
 			return $this->update();
 		}else{
@@ -155,6 +158,12 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		$this->onAfterInsert();
 		return $this->id;
 	}
+
+
+	/**
+	 * @return \Symfony\Component\Validator\ConstraintViolationList[]
+	 */
+	public function validate($onlymessage = true){ return static::$model->validate($this, $onlymessage); }
 
 #endregion
 

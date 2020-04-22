@@ -49,7 +49,7 @@ abstract class GMark{
 		}
 	}
 
-	public function parse($string, &$fragments = null){
+	public function parse($string){
 		$string = preg_replace("/[\r\n]{2,}/", "\n\n", trim($string));
 		$parts = explode("\n\n", $string);
 		$blocks = [];
@@ -70,9 +70,6 @@ abstract class GMark{
 				$output[] = $this->$method($block['command']['as'], $block['body'], ...$block['params']);
 			}
 		}
-
-		$fragments = $output;
-
 		return $this->joinBlocks($output);
 	}
 

@@ -22,7 +22,7 @@ class GhostManager extends Module{
 	private $classLoader;
 
 	public function getGhosts(){ return $this->ghosts; }
-	public function getAttachment(){return $this->attachment;}
+	public function getAttachment(){ return $this->attachment; }
 	public function getNamespace(){ return $this->namespace; }
 
 	public function __construct(Reader $reader, ClassLoader $classLoader){
@@ -61,12 +61,12 @@ class GhostManager extends Module{
 		$location = CodeFinder::Service()->Psr4ResolveNamespace($this->namespace);
 
 		foreach ($this->ghosts as $ghost){
-			$this->classLoader->addClassMap([$ghost['class'].'Ghost' => realpath($location.$ghost['name'].'.ghost.php')]);
+			$this->classLoader->addClassMap([$ghost['class'] . 'Ghost' => realpath($location . $ghost['name'] . '.ghost.php')]);
 		}
 
 		foreach ($this->ghosts as $ghost){
 			$decoratorMethod = lcfirst($ghost['name']);
-			if (class_exists($ghost['class'])){
+			if (file_exists(realpath($location . $ghost['name'] . '.ghost.php')) && class_exists($ghost['class'])){
 				$decorator = $ghost['class']::init($this);
 				if (method_exists($decoratorObject, $decoratorMethod)) $decoratorObject->$decoratorMethod($decorator);
 			}

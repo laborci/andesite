@@ -6,6 +6,10 @@ use Andesite\Attachment\AttachmentStorage;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\PDOConnection;
 use Andesite\DBAccess\ConnectionFactory;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Validation;
 
 class Model{
 
@@ -28,9 +32,31 @@ class Model{
 	public $getters = [];
 	/** @var array */
 	public $setters = [];
-
 	/** @var bool */
 	protected $mutable = true;
+
+	private $validators = [];
+	final public function addValidator($field, Constraint $validator){
+		if (!array_key_exists($field, $this->validators)) $this->validators[$field] = [];
+		$this->validators[$field][] = $validator;
+	}
+
+	public function validate(Ghost $item, $onlymessage = true){
+		$validator = Validation::createValidator();
+		$errors = [];
+		foreach ($this->validators as $field => $validators){
+			$violations = $validator->validate($item->$field, $validators);
+			for ($i = 0; $i < $violations->count(); $i++){
+				$error = [
+					'field'   => $field,
+					'message' => $violations->get($i)->getMessage(),
+				];
+				if (!$onlymessage) $error['violation'] = $violations->get($i);
+				$errors[] = $error;
+			}
+		}
+		return $errors;
+	}
 
 	public function __construct($ghost){
 		$table = $ghost::Table;
@@ -66,7 +92,7 @@ class Model{
 		if ($setter === true || $setter === null) $setter = 'set' . ucfirst($field);
 		if ($getter !== false) $this->getters[$field] = ['type' => 'virtual', 'method' => $getter];
 		if ($setter !== false) $this->setters[$field] = ['method' => $setter];
-		$this->virtuals[$field] = ['setter' => $setter, 'getter' => $getter, 'name' => $field, 'type'=>$type];
+		$this->virtuals[$field] = ['setter' => $setter, 'getter' => $getter, 'name' => $field, 'type' => $type];
 	}
 
 	public function immutable(){ $this->mutable = false; }
@@ -76,13 +102,13 @@ class Model{
 	public function createGhost(): Ghost{ return new $this->ghost; }
 
 	public function hasMany($target, $ghost, $field): Relation{
-		$this->getters[$target] = ['type'=>'relation'];
+		$this->getters[$target] = ['type' => 'relation'];
 		return $this->relations[$target] = new Relation($target, Relation::TYPE_HASMANY, ['ghost' => $ghost, 'field' => $field]);
 	}
 
 	public function belongsTo($target, $ghost, $field = null): Relation{
 		if ($field === null) $field = $target . 'Id';
-		$this->getters[$target] = ['type'=>'relation'];
+		$this->getters[$target] = ['type' => 'relation'];
 		return $this->relations[$target] = new Relation($target, Relation::TYPE_BELONGSTO, ['ghost' => $ghost, 'field' => $field]);
 	}
 
@@ -91,7 +117,7 @@ class Model{
 	}
 
 	public function hasAttachment($name): AttachmentCategory{
-		$this->getters[$name] = ['type'=>'attachment'];
+		$this->getters[$name] = ['type' => 'attachment'];
 		return $this->getAttachmentStorage()->addCategory($name);
 	}
 
