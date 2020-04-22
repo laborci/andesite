@@ -102,6 +102,7 @@ class Field{
 			case self::TYPE_SET:
 				return $value;
 			case self::TYPE_JSON:
+				if(is_array($value)) return $value;
 				return json_decode($value, true);
 		}
 		return $value;
