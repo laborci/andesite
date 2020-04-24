@@ -9,13 +9,13 @@ class ServiceContainer{
 	protected static function instance(){ return is_null(static::$instance) ? static::$instance = new static() : static::$instance; }
 	protected function __construct(){ }
 
-	public static function bind($name, $service): ServiceFactory{ return static::instance()->set($name, false, $service); }
-	public static function shared($name, $service): ServiceFactory{ return static::instance()->set($name, true, $service); }
+	public static function bind($name, $service, ...$args): ServiceFactory{ return static::instance()->set($name, false, $service, $args); }
+	public static function shared($name, $service, ...$args): ServiceFactory{ return static::instance()->set($name, true, $service, $args); }
 	public static function value($name, $value): ServiceFactory{ return static::instance()->set($name, null, $value); }
 	public static function get($name){ return static::instance()->_get($name); }
 
-	protected function set($name, $shared, $factory){
-		$service = new ServiceFactory($name, $shared, $factory);
+	protected function set($name, $shared, $factory, $args = []){
+		$service = new ServiceFactory($name, $shared, $factory, $args);
 		$this->services[$name] = $service;
 		return $service;
 	}

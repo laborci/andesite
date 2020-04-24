@@ -7,11 +7,13 @@ class ServiceFactory{
 	private $factory = null;
 	private $service = null;
 	private $sharedService = null;
+	private $args;
 
-	public function __construct(string $name, $shared, $factory){
+	public function __construct(string $name, $shared, $factory, $args){
 		$this->name = $name;
 		if (is_null($shared)) $this->sharedService = $factory;
 		else{
+			$this->args = $args;
 			$this->shared = $shared;
 			$this->factory = $factory;
 		}
@@ -27,7 +29,7 @@ class ServiceFactory{
 			$class = $this->factory;
 			$reflection = new \ReflectionClass($class);
 			if ($reflection->implementsInterface(SelfFactoryService::class)){
-				$service = $class::factory();
+				$service = $class::factory(...$this->args);
 			}else{
 				$constructor = $reflection->getConstructor();
 				$arguments = is_null($constructor) ? [] : array_map(function (\ReflectionParameter $parameter){
@@ -36,7 +38,7 @@ class ServiceFactory{
 				$service = new $class(...$arguments);
 			}
 		}else{
-			$service = ( $this->factory )($this->name);
+			$service = ( $this->factory )(...$this->args);
 		}
 
 		if ($this->shared){
