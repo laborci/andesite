@@ -12,7 +12,10 @@ class CodexAttachmentUpload extends Responder{
 			$formHandler->uploadAttachment($id, $category, $file);
 		}catch (\Throwable $exception){
 			$this->getResponse()->setStatusCode(400);
-			return['message'=>$exception->getMessage()];
+			return[
+				'exception'=>get_class($exception),
+				'message'=>$exception->getMessage()
+			];
 		}
 		return [];
 	}

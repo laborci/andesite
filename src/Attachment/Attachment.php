@@ -3,25 +3,24 @@
 use Symfony\Component\HttpFoundation\File\File;
 
 /**
- * @property-read           $url
- * @property-read           $path
- * @property-read           $category
+ * @property-read string    $url
+ * @property-read string    $path
+ * @property-read string    $category
  * @property-read Thumbnail $thumbnail
  */
 class Attachment extends File implements \JsonSerializable{
 
-	/** @var AttachmentCategoryManager */
-	private $categoryManager;
-	public $description;
-	public $ordinal;
-	public $meta;
+	public string $description;
+	public int $ordinal;
+	public array $meta;
+	private AttachmentCategoryManager $categoryManager;
 
 	public function __construct(
-		$filename,
+		string $filename,
 		AttachmentCategoryManager $categoryManager,
-		$description = '',
-		$ordinal = 0,
-		$meta = []
+		string $description = '',
+		int $ordinal = 0,
+		array $meta = []
 	){
 		parent::__construct($categoryManager->getPath() . '/' . $filename);
 		$this->categoryManager = $categoryManager;
@@ -29,8 +28,6 @@ class Attachment extends File implements \JsonSerializable{
 		$this->ordinal = $ordinal;
 		$this->meta = $meta;
 	}
-
-	public function getCategory(): AttachmentCategory{ return $this->categoryManager->getCategory(); }
 
 	public function __get($name){
 		switch ($name){
@@ -50,11 +47,19 @@ class Attachment extends File implements \JsonSerializable{
 		return null;
 	}
 
+	public function getCategory(): AttachmentCategory{ return $this->categoryManager->getCategory(); }
+
 	public function __isset($name){
 		return in_array($name, ['path', 'url', 'category', 'thumbnail', 'file', 'extension']);
 	}
 
-	public function getRecord(){
+	public function store(){ $this->categoryManager->store($this); }
+
+	public function remove(){ $this->categoryManager->remove($this); }
+
+	public function jsonSerialize(): array{ return $this->getRecord(); }
+
+	public function getRecord(): array{
 		return [
 			'path'        => $this->categoryManager->getOwner()->getPath(),
 			'url'         => $this->url,
@@ -67,19 +72,5 @@ class Attachment extends File implements \JsonSerializable{
 			'extension'   => strtolower($this->getExtension()),
 			'mime-type'   => $this->getMimeType(),
 		];
-	}
-
-	public function store(){ $this->categoryManager->store($this); }
-	public function remove(){ $this->categoryManager->remove($this); }
-
-	/**
-	 * Specify data which should be serialized to JSON
-	 * @link  https://php.net/manual/en/jsonserializable.jsonserialize.php
-	 * @return mixed data which can be serialized by <b>json_encode</b>,
-	 * which is a value of any type other than a resource.
-	 * @since 5.4.0
-	 */
-	public function jsonSerialize(){
-		return $this->getRecord();
 	}
 }

@@ -4,12 +4,12 @@ use Andesite\Mission\Web\Responder\PageResponder;
 
 class ThumbnailResponder extends PageResponder{
 
-	protected $target;
-	protected $source;
-	protected $img;
-	protected $originalHeight;
-	protected $originalWidth;
-	protected $ext;
+	private $target;
+	private $source;
+	private $img;
+	private $originalHeight;
+	private $originalWidth;
+	private $ext;
 
 	protected function prepare(): bool{
 
@@ -102,7 +102,7 @@ class ThumbnailResponder extends PageResponder{
 		return true;
 	}
 
-	protected function height($op){
+	private function height($op){
 		$cropmode = $this->getCropMode($op);
 		$arglen = strlen($op) / 2;
 		$height = base_convert(substr($op, 0, $arglen), 32, 10);
@@ -115,7 +115,7 @@ class ThumbnailResponder extends PageResponder{
 			$this->doCrop($maxWidth, $height, $cropmode);
 	}
 
-	protected function width($op){
+	private function width($op){
 		$cropmode = $this->getCropMode($op);
 		$arglen = strlen($op) / 2;
 		$width = base_convert(substr($op, 0, $arglen), 32, 10);
@@ -128,7 +128,7 @@ class ThumbnailResponder extends PageResponder{
 			$this->doCrop($width, $maxHeight, $cropmode);
 	}
 
-	protected function crop($op){
+	private function crop($op){
 		$cropmode = $this->getCropMode($op);
 		$arglen = strlen($op) / 2;
 		$width = base_convert(substr($op, 0, $arglen), 32, 10);
@@ -146,7 +146,7 @@ class ThumbnailResponder extends PageResponder{
 		$this->doCrop($width, $height, $cropmode);
 	}
 
-	protected function box($op){
+	private function box($op){
 		$arglen = strlen($op) / 2;
 		$width = base_convert(substr($op, 0, $arglen), 32, 10);
 		$height = base_convert(substr($op, $arglen), 32, 10);
@@ -159,14 +159,14 @@ class ThumbnailResponder extends PageResponder{
 		$this->doResize($width, $height);
 	}
 
-	protected function scale($op){
+	private function scale($op){
 		$arglen = strlen($op) / 2;
 		$width = base_convert(substr($op, 0, $arglen), 32, 10);
 		$height = base_convert(substr($op, $arglen), 32, 10);
 		$this->doResize($width, $height);
 	}
 
-	protected function doResize($width, $height){
+	private function doResize($width, $height){
 		$newImg = imagecreatetruecolor($width, $height);
 		$oWidth = imagesx($this->img);
 		$oHeight = imagesy($this->img);
@@ -176,7 +176,7 @@ class ThumbnailResponder extends PageResponder{
 		$this->img = $newImg;
 	}
 
-	protected function doCrop($width, $height, $mode){
+	private function doCrop($width, $height, $mode){
 		$newImg = imageCreateTrueColor($width, $height);
 		imagefill($newImg, 0, 0, imagecolorallocatealpha($newImg, 0, 0, 0, 127));
 		$sx = $sy = 0;
@@ -201,7 +201,7 @@ class ThumbnailResponder extends PageResponder{
 		$this->img = $newImg;
 	}
 
-	protected function getCropMode(&$op){
+	private function getCropMode(&$op){
 		if (substr($op, 0, 1) == '-'){
 			$op = substr($op, 1);
 			return 1;

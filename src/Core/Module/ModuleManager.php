@@ -31,7 +31,7 @@ class ModuleManager implements SharedService{
 		}
 	}
 
-	protected function resolveAlias($alias){ return array_key_exists($alias, $this->aliases) ? $this->aliases[$alias] : $alias; }
+	private function resolveAlias($alias){ return array_key_exists($alias, $this->aliases) ? $this->aliases[$alias] : $alias; }
 
 	public static function register($alias, $config){
 		$manager = static::Service();
@@ -62,7 +62,7 @@ class ModuleManager implements SharedService{
 		foreach ($manager->instances as $instance) $instance->run();
 	}
 
-	protected function loadInstance(ModuleInstance $instance){
+	private function loadInstance(ModuleInstance $instance){
 		if ($instance->loaded === true) return $instance->module;
 		if ($instance->loaded === 'loading') throw new \Exception('Module circular dependency detected');
 		$instance->loaded = 'loading';

@@ -3,23 +3,22 @@
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class AttachmentCategory{
+class AttachmentCategory implements AttachmentCategorySetterInterface{
 
-	protected $name;
-	protected $acceptedExtensions = [];
-	protected $maxFileSize = INF;
-	protected $maxFileCount = INF;
-	/** @var AttachmentStorage */
-	private $attachmentStorage;
-	/** @var AttachmentCategoryManager[] */
-	private $attachmentCategoryManagers = [];
+	private string $name;
+	private array $acceptedExtensions = [];
+	private int $maxFileSize = -1;
+	private int $maxFileCount = -1;
+	private AttachmentStorage $attachmentStorage;
+	/** @var \Andesite\Attachment\AttachmentCategoryManager[] */
+	private array $attachmentCategoryManagers = [];
 
-	function __construct($name, AttachmentStorage $attachmentStorage){
+	public function __construct(string $name, AttachmentStorage $attachmentStorage){
 		$this->name = $name;
 		$this->attachmentStorage = $attachmentStorage;
 	}
 
-	public function acceptExtensions(...$extensions): self{
+	public function acceptExtensions(string ...$extensions): self{
 		$this->acceptedExtensions = array_map(function ($ext){ return strtolower($ext); }, $extensions);
 		return $this;
 	}
@@ -35,31 +34,30 @@ class AttachmentCategory{
 	}
 
 	public function getCategoryManager(AttachmentOwnerInterface $owner): AttachmentCategoryManager{
-		if (!array_key_exists($owner->getPath(), $this->attachmentCategoryManagers)) $this->attachmentCategoryManagers[$owner->getPath()] = new AttachmentCategoryManager($this, $owner);
+		if (!array_key_exists($owner->getPath(), $this->attachmentCategoryManagers)){
+			$this->attachmentCategoryManagers[$owner->getPath()] = new AttachmentCategoryManager($this, $owner);
+		}
 		return $this->attachmentCategoryManagers[$owner->getPath()];
 	}
 
 	/** @return string[] */
-	public function getAcceptedExtensions(){ return $this->acceptedExtensions; }
+	public function getAcceptedExtensions(): array{ return $this->acceptedExtensions; }
 
-	/** @return int */
-	public function getMaxFileSize(){ return $this->maxFileSize; }
+	public function getMaxFileSize(): int{ return $this->maxFileSize; }
 
-	/** @return string */
 	public function getName(): string{ return $this->name; }
 
-	/** @return int */
-	public function getMaxFileCount(){ return $this->maxFileCount; }
+	public function getMaxFileCount(): int{ return $this->maxFileCount; }
 
 	public function getAttachmentStorage(): AttachmentStorage{ return $this->attachmentStorage; }
 
-	public function isValidUpload(File $upload){
-		if ($upload->getSize() > $this->maxFileSize)
-			return false;
-		$ext = $upload instanceof UploadedFile ? $upload->getClientOriginalExtension() : $upload->getExtension();
-		if (!is_null($this->acceptedExtensions) && !in_array($ext, $this->acceptedExtensions))
-			return false;
-		return true;
-	}
+//	public function isValidUpload(File $upload){
+//		if ($this->maxFileSize!== -1 && $upload->getSize() > $this->maxFileSize)
+//			return false;
+//		$ext = $upload instanceof UploadedFile ? $upload->getClientOriginalExtension() : $upload->getExtension();
+//		if (!is_null($this->acceptedExtensions) && !in_array($ext, $this->acceptedExtensions))
+//			return false;
+//		return true;
+//	}
 
 }

@@ -6,24 +6,21 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * @property-read Attachment[] $all
- * @property-read Attachment $first
- * @property-read int $count
+ * @property-read Attachment   $first
+ * @property-read int          $count
  */
-class AttachmentCategoryManager {
+class AttachmentCategoryManager{
 
-	/** @var AttachmentOwnerInterface */
-	protected $owner;
-	protected $path;
-	protected $url;
+	protected AttachmentOwnerInterface $owner;
+	protected string $path;
+	protected string $url;
 
 	/** @var Attachment[] */
-	protected $attachments = null;
-	/** @var AttachmentStorage */
-	private $attachmentStorage;
-	/** @var AttachmentCategory */
-	private $category;
+	private ?array $attachments = null;
+	private AttachmentStorage $attachmentStorage;
+	private AttachmentCategory $category;
 
-	public function __construct(AttachmentCategory $category, AttachmentOwnerInterface $owner) {
+	public function __construct(AttachmentCategory $category, AttachmentOwnerInterface $owner){
 		$this->category = $category;
 		$this->owner = $owner;
 		$this->attachmentStorage = $category->getAttachmentStorage();
@@ -32,65 +29,65 @@ class AttachmentCategoryManager {
 		$this->url = $this->attachmentStorage->getUrl() . $owner->getPath();
 	}
 
-	public function getOwner(): AttachmentOwnerInterface { return $this->owner; }
-	public function getCategory(): AttachmentCategory { return $this->category; }
-	public function getStorage(): AttachmentStorage { return $this->attachmentStorage; }
-	public function getPath(): string { return $this->path; }
-	public function getUrl(): string { return $this->url; }
+	public function getOwner(): AttachmentOwnerInterface{ return $this->owner; }
+	public function getCategory(): AttachmentCategory{ return $this->category; }
+	public function getStorage(): AttachmentStorage{ return $this->attachmentStorage; }
+	public function getPath(): string{ return $this->path; }
+	public function getUrl(): string{ return $this->url; }
 
-	public function addFile(File $file, $description = '', $ordinal = 0, $meta = []) {
+	public function addFile(File $file, string $description = '', int $ordinal = 0, array $meta = []){
 
 		if ($file instanceof UploadedFile){
 			$extension = $file->getClientOriginalExtension();
 		}else{
 			$extension = $file->getExtension();
 		}
-		if ($this->count >= $this->category->getMaxFileCount()) {
-			throw new FileCount();
-		} else if ($file->getSize() > $this->category->getMaxFileSize()) {
-			throw new FileSize();
-		} else if (count($this->category->getAcceptedExtensions()) && !in_array($extension, $this->category->getAcceptedExtensions())) {
-			throw new FileNotAcceptable();
+		if ($this->category->getMaxFileCount() !== -1 && $this->count >= $this->category->getMaxFileCount()){
+			throw new FileCount("Maximum allowed number of files for this category is ".$this->category->getMaxFileCount());
+		}elseif ($this->category->getMaxFileSize() !== -1 && $file->getSize() > $this->category->getMaxFileSize()){
+			throw new FileSize("The size of the file is out of range. Max allowed size: ".$this->category->getMaxFileSize().' bytes');
+		}elseif (count($this->category->getAcceptedExtensions()) && !in_array($extension, $this->category->getAcceptedExtensions())){
+			throw new FileNotAcceptable("This category only accepst files with these extensions: ".join(', ', $this->category->getAcceptedExtensions()));
 		}
 
 		if (!is_dir($this->path)) mkdir($this->path, 0777, true);
 
-		if ($file instanceof UploadedFile) {
+		if ($file instanceof UploadedFile){
 			$file = $file->move($this->path, $file->getClientOriginalName());
-		} else {
+		}else{
 			copy($file->getPath() . '/' . $file->getFilename(), $this->path . $file->getFilename());
 		}
 
 		$attachment = new Attachment($file->getFilename(), $this, $description, $ordinal, $meta);
 
 		$this->owner->onAttachmentAdded([
-			'category'   => $this->category,
-			'attachment' => $attachment,
-		]);
+													  'category'   => $this->category,
+													  'attachment' => $attachment,
+												  ]);
 
 		$this->store($attachment);
 	}
 
 	/** @return Attachment[] */
-	public function getAttachments(): array {
+	public function getAttachments(): array{
 		if (is_null($this->attachments))
 			$this->collect();
 		return $this->attachments;
 	}
 
-	public function hasAttachments(): bool { return (bool)count($this->getAttachments()); }
+	public function hasAttachments(): bool{ return (bool)count($this->getAttachments()); }
 
-	public function get($filename) {
+	public function get(string $filename): ?Attachment{
 		$attachments = $this->getAttachments();
-		foreach ($attachments as $attachment)
-			if ($filename === $attachment->getFilename())
-				return $attachment;
+		foreach ($attachments as $attachment){
+			if ($filename === $attachment->getFilename()) return $attachment;
+		}
 		return null;
 	}
 
-	public function __get($name) {
+	public function __get($name){
 		$attachments = $this->getAttachments();
-		switch ($name) {
+		switch ($name){
 			case 'all':
 				return $attachments;
 				break;
@@ -107,7 +104,7 @@ class AttachmentCategoryManager {
 		return in_array($name, ['all', 'first', 'count']);
 	}
 
-	public function store(Attachment $attachment) {
+	public function store(Attachment $attachment){
 		$record = $attachment->getRecord();
 		$statement = $this->attachmentStorage->getMetaDBConnection()
 			->prepare(/** @lang SQLite */ "INSERT OR REPLACE INTO file (path, file, size, meta, description, category, ordinal) 
@@ -123,22 +120,22 @@ class AttachmentCategoryManager {
 		$this->attachments = null;
 	}
 
-	protected function collect() {
+	protected function collect(){
 		$statement = $this->attachmentStorage->getMetaDBConnection()
 			->prepare(/** @lang SQLite */ " SELECT * FROM file WHERE path = :path AND category = :category ORDER BY ordinal, file");
 		$statement->bindValue(':path', $this->owner->getPath());
 		$statement->bindValue(':category', $this->category->getName());
 		$result = $statement->execute();
 		$this->attachments = [];
-		while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+		while ($row = $result->fetchArray(SQLITE3_ASSOC)){
 			$this->attachments[] = new Attachment($row['file'], $this, $row['description'], $row['ordinal'], json_decode($row['meta'], true));
 		}
 		return $this->attachments;
 	}
 
-	public function remove(Attachment $attachment) {
+	public function remove(Attachment $attachment){
 		$statement = $this->attachmentStorage->getMetaDBConnection()
-			->prepare(/** @lang SQLite */" DELETE FROM file WHERE path = :path AND file = :file AND category = :category");
+			->prepare(/** @lang SQLite */ " DELETE FROM file WHERE path = :path AND file = :file AND category = :category");
 		$statement->bindValue(':path', $this->owner->getPath());
 		$statement->bindValue(':category', $this->category->getName());
 		$statement->bindValue(':file', $attachment->getFilename());

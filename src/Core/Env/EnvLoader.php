@@ -11,7 +11,7 @@ class EnvLoader implements SharedService{
 
 	use Service;
 
-	protected $env = [];
+	private $env = [];
 
 	public function rebuildCache($force = false){
 		$cacheFile = getenv('env-file');
@@ -27,19 +27,9 @@ class EnvLoader implements SharedService{
 		return true;
 	}
 
-	protected function load(){
+	private function load(){
 		$loader = new Loader(getenv('ini-path'), ".local.yml");
-		return $loader->load(getenv('ini-file'), [
-			"root"                     => getenv('root'),
-//			"path"                     => ["root" => getenv('root')],
-//			"sys.missions @"           => "missions/*",
-//			"sys.startup @"            => "~module/startup-modules",
-//			"sys.modules @"            => "~module/base-modules",
-//			"sys.module.aliases @"     => "~module/aliases",
-//			"sys.module.configs @"     => "module/module-configs/*",
-//			"cli/sys.module.configs @" => "module/cli-module-configs/*",
-//			"path @"                   => "~config/path",
-		]);
+		return $loader->load(getenv('ini-file'), ["root" => getenv('root'),]);
 	}
 
 }

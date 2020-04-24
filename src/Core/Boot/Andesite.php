@@ -19,8 +19,8 @@ class Andesite{
 	private $devmode = false;
 	private $requestId;
 
-	public function isDevMode(){ return $this->devmode; }
-	public function getRequestId(){ return $this->requestId; }
+	public function isDevMode():bool { return $this->devmode; }
+	public function getRequestId():string { return $this->requestId; }
 
 	public static function mission(): Mission{
 		/** @var Mission $mission */
@@ -28,7 +28,7 @@ class Andesite{
 		return $mission;
 	}
 
-	public static function setup($root, $ini, $env, ClassLoader $classLoader){
+	public static function setup(string $root, string $ini, string $env, ClassLoader $classLoader):self {
 		putenv('root=' . realpath($root) . '/');
 		putenv('context=' . ( http_response_code() ? 'WEB' : 'CLI' ));
 		putenv('env-file=' . getenv('root') . $env);

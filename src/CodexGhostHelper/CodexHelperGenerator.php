@@ -19,8 +19,7 @@ class CodexHelperGenerator{
 
 	use Service;
 
-
-	public function execute(SymfonyStyle $style, $config){
+	public function execute(SymfonyStyle $style, array $config){
 
 		$namespace = $config['namespace'];
 		$ghosts = GhostManager::Module()->getGhosts();

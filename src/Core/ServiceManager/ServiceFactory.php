@@ -2,11 +2,11 @@
 
 class ServiceFactory{
 
-	protected $name;
-	protected $shared = false;
-	protected $factory = null;
-	protected $service = null;
-	protected $sharedService = null;
+	private $name;
+	private $shared = false;
+	private $factory = null;
+	private $service = null;
+	private $sharedService = null;
 
 	public function __construct(string $name, $shared, $factory){
 		$this->name = $name;

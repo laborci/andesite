@@ -19,9 +19,9 @@ class AttachmentStorage{
 	private $baseUrl;
 	private $thumbnailConfig;
 
-	public function getThumbnailConfig(){return $this->thumbnailConfig;}
+	public function getThumbnailConfig():array {return $this->thumbnailConfig;}
 
-	public function __construct($storage, $config){
+	public function __construct(string $storage, array $config){
 		$this->basePath = $config['path'];
 		$this->baseUrl = $config['url'];
 		$this->path = $this->basePath . '/' . $storage;
@@ -32,26 +32,28 @@ class AttachmentStorage{
 		$this->storage = $storage;
 	}
 
-	public function addCategory($name){
+	public function addCategory(string $name):AttachmentCategory{
 		$category = new AttachmentCategory($name, $this);
 		$this->categories[$category->getName()] = $category;
 		return $category;
 	}
 
-	public function getBasePath(){ return $this->basePath; }
-	public function getBaseUrl(){ return $this->baseUrl; }
-	public function getPath(){ return $this->path; }
-	public function getUrl(){ return $this->url; }
-	public function getCategories(){ return $this->categories; }
-	public function getStorageName(){ return $this->storage; }
-	public function hasCategory($category){ return array_key_exists($category, $this->categories); }
-	public function getCategory($category): AttachmentCategory{
+	public function getBasePath():string { return $this->basePath; }
+	public function getBaseUrl():string { return $this->baseUrl; }
+	public function getPath():string { return $this->path; }
+	public function getUrl():string { return $this->url; }
+
+	/** @return \Andesite\Attachment\AttachmentCategory[] */
+	public function getCategories():array { return $this->categories; }
+	public function getStorageName():string { return $this->storage; }
+	public function hasCategory(string $category):bool { return array_key_exists($category, $this->categories); }
+	public function getCategory(string $category): AttachmentCategory{
 		if (array_key_exists($category, $this->categories))
 			return $this->categories[$category];
 		else throw new CategoryNotFound();
 	}
 
-	public function getMetaDBConnection(){
+	public function getMetaDBConnection(): SQLite3{
 		if (is_null($this->metaDBConnection)){
 			if (!file_exists($this->metaFile)){
 				$connection = new SQLite3($this->metaFile);

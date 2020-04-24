@@ -67,8 +67,8 @@ class GhostManager extends Module{
 		foreach ($this->ghosts as $ghost){
 			$decoratorMethod = lcfirst($ghost['name']);
 			if (file_exists(realpath($location . $ghost['name'] . '.ghost.php')) && class_exists($ghost['class'])){
-				$decorator = $ghost['class']::init($this);
-				if (method_exists($decoratorObject, $decoratorMethod)) $decoratorObject->$decoratorMethod($decorator);
+				$model = $ghost['class']::init($this);
+				if (method_exists($decoratorObject, $decoratorMethod)) $decoratorObject->$decoratorMethod($model);
 			}
 		}
 	}

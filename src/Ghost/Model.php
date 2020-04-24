@@ -11,7 +11,7 @@ use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Validation;
 
-class Model{
+class Model implements Decorator{
 
 	/** @var PDOConnection */
 	public $connection;

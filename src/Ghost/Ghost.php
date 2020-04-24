@@ -31,8 +31,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 			$model = static::createModel();
 			static::setModel($model);
 		}
-		$decorator = new Decorator(static::model());
-		return $decorator;
+		return static::model();
 	}
 	abstract static protected function createModel(): Model;
 

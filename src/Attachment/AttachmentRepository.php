@@ -1,17 +1,19 @@
 <?php namespace Andesite\Attachment;
 
 use Andesite\Core\Module\Module;
+use Andesite\Mission\Web\Routing\Router;
 
 class AttachmentRepository extends Module{
 
-	private $repository;
+	private array $repository;
+	/** @var \Andesite\Attachment\AttachmentStorage[]  */
 	private $pool = [];
 
-	protected function setup($config){
+	private function setup(array $config){
 		$this->repository = $config;
 	}
 
-	public function getStorage($storage, $name){
+	public function getStorage(string $storage, string $name):AttachmentStorage{
 		$key = $storage.'.'.$name;
 		if(!array_key_exists($key, $this->pool)){
 			$this->pool[$key] = new AttachmentStorage($storage, $this->repository[$name]);
@@ -19,11 +21,11 @@ class AttachmentRepository extends Module{
 		return $this->pool[$key];
 	}
 
-	public function getConfig($name){
+	public function getConfig(string $name):array {
 		return $this->repository[$name];
 	}
 
-	public function routeThumbnails($router, $name){
+	public function routeThumbnails(Router $router, string $name){
 		$router->get($this->repository[$name]['thumbnail']['url'].'/*', ThumbnailResponder::class, ['config'=>$this->repository[$name]])();
 	}
 }

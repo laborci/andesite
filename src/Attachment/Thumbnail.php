@@ -10,22 +10,21 @@ use Symfony\Component\HttpFoundation\File\File;
  * @property string $url
  */
 class Thumbnail{
-	protected $urlBase;
-	protected $path;
-	protected $sourcePath;
+	private $urlBase;
+	private $path;
+	private $sourcePath;
 
-	/** @var File */
-	protected $file;
-	protected $operation;
-	protected $jpegQuality;
-	protected $pathId;
+	private File $file;
+	private $operation;
+	private $jpegQuality;
+	private $pathId;
 
 	const CROP_MIDDLE = 0;
 	const CROP_START = -1;
 	const CROP_END = 1;
 	private $secret;
 
-	public function __construct(File $file, $config){
+	public function __construct(File $file, array $config){
 		$this->file = $file;
 
 		$this->sourcePath = $config['source-path'];
@@ -44,7 +43,7 @@ class Thumbnail{
 			unlink($file);
 	}
 
-	public function scale(int $width, int $height){
+	public function scale(int $width, int $height):self{
 		$padding = 1;
 		if ($width > 31 || $height > 31){
 			$padding = 2;
@@ -58,7 +57,7 @@ class Thumbnail{
 		return $this;
 	}
 
-	public function crop(int $width, int $height, int $crop = 0){
+	public function crop(int $width, int $height, int $crop = 0):self{
 		$padding = 1;
 		if ($width > 31 || $height > 31){
 			$padding = 2;
@@ -78,7 +77,7 @@ class Thumbnail{
 		return $this;
 	}
 
-	public function box(int $width, int $height){
+	public function box(int $width, int $height):self{
 		$padding = 1;
 		if ($width > 31 || $height > 31){
 			$padding = 2;
@@ -93,7 +92,7 @@ class Thumbnail{
 		return $this;
 	}
 
-	public function width(int $width, int $maxHeight = 0, int $crop = 0){
+	public function width(int $width, int $maxHeight = 0, int $crop = 0):self{
 		$padding = 1;
 		if ($width > 31 || $maxHeight > 31){
 			$padding = 2;
@@ -113,7 +112,7 @@ class Thumbnail{
 		return $this;
 	}
 
-	public function height(int $height, int $maxWidth = 0, int $crop = 0){
+	public function height(int $height, int $maxWidth = 0, int $crop = 0):self{
 		$padding = 1;
 		if ($height > 31 || $maxWidth > 31){
 			$padding = 2;
@@ -133,16 +132,16 @@ class Thumbnail{
 		return $this;
 	}
 
-	public function exportGif(){ return $this->thumbnail('gif'); }
+	public function exportGif():string { return $this->thumbnail('gif'); }
 
-	public function exportPng(){ return $this->thumbnail('png'); }
+	public function exportPng():string { return $this->thumbnail('png'); }
 
-	public function exportJpg(int $quality = null){
+	public function exportJpg(int $quality = null):string {
 		if(!is_null($quality)) $this->jpegQuality = $quality;
 		return $this->thumbnail('jpg');
 	}
 
-	public function export(int $quality = null){
+	public function export(int $quality = null):string {
 		if(!is_null($quality)) $this->jpegQuality = $quality;
 		$fileinfo = pathinfo($this->file);
 		$ext = strtolower($fileinfo['extension']);
@@ -151,7 +150,7 @@ class Thumbnail{
 		return $this->thumbnail($ext);
 	}
 
-	protected function thumbnail($ext): string{
+	protected function thumbnail(string $ext): string{
 		$op = $this->operation;
 		if ($ext == 'jpg'){
 			if ($this->jpegQuality < 0)
