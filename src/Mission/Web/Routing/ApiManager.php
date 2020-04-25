@@ -50,7 +50,16 @@ class ApiManager extends Segment{
 
 			if (is_null($method)) throw new Exception('', 404);
 			if (count($params) < $method->getNumberOfRequiredParameters()) throw new Exception('', 400);
-			$this->next([$class, $method->getName()], $params);
+
+			$this->prepend([$class, $method->getName()], $params);
+
+			$middlewares = array_reverse($reader->getAnnotations($method)->getAsArray('middleware'));
+			foreach ($middlewares as $middleware) $this->prepend($middleware);
+
+			$middlewares = array_reverse($reader->getAnnotations($reflection)->getAsArray('middleware'));
+			foreach ($middlewares as $middleware) $this->prepend($middleware);
+
+			$this->next();
 
 		}catch (Exception $e){
 			$this->getResponse()->setStatusCode($e->getCode());

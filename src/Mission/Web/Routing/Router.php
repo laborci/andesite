@@ -24,9 +24,8 @@ class Router{
 	public function put($pattern, $responderClass = null, $arguments = []): Pipeline{ return $this->route(Request::METHOD_PUT, $pattern, $responderClass, $arguments); }
 	public function patch($pattern, $responderClass = null, $arguments = []): Pipeline{ return $this->route(Request::METHOD_PATCH, $pattern, $responderClass, $arguments); }
 	public function any($pattern, $responderClass = null, $arguments = []): Pipeline{ return $this->route('*', $pattern, $responderClass, $arguments); }
-
+	public function api($path, $namespace){ return $this->route('*', rtrim($path, '/') . '/{path}', ApiManager::class, ['namespace' => $namespace]); }
 	public function clearPipeline(){ $this->pipeline = []; }
-
 	public function pipe($responderClass, $arguments = []){ $this->pipeline[] = ['responderClass' => $responderClass, 'arguments' => $arguments,]; }
 
 	protected function route($method, $patterns, $responderClass = null, $arguments = []): Pipeline{

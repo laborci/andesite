@@ -5,7 +5,7 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class PipelineRunner {
+class PipelineRunner{
 
 	private $request;
 	private $response;
@@ -14,9 +14,9 @@ class PipelineRunner {
 	private $pipeline;
 
 	public function __construct(Request $request,
-	                            ParameterBag $pathBag,
-	                            ParameterBag $dataBag,
-	                            array &$pipeline) {
+		ParameterBag $pathBag,
+		ParameterBag $dataBag,
+		array &$pipeline){
 		$this->request = $request;
 		$this->pathBag = $pathBag;
 		$this->dataBag = $dataBag;
@@ -24,15 +24,15 @@ class PipelineRunner {
 		$this->response = new Response();
 	}
 
-	public function __invoke($responderClass = null, $arguments = []) {
+	public function __invoke($responderClass = null, $arguments = []){
 		$segment = null;
-		if (!is_null($responderClass)) {
+		if (!is_null($responderClass)){
 			$segment = ['responderClass' => $responderClass, 'arguments' => $arguments];
 			$this->pipeline = [];
-		} else if (count($this->pipeline)) {
+		}elseif (count($this->pipeline)){
 			$segment = array_shift($this->pipeline);
 		}
-		if ($segment) {
+		if ($segment){
 			$class = is_array($segment['responderClass']) ? $segment['responderClass'][0] : $segment['responderClass'];
 			$method = is_array($segment['responderClass']) ? $segment['responderClass'][1] : null;
 			$arguments = $segment['arguments'];
@@ -47,10 +47,18 @@ class PipelineRunner {
 		return $this->response;
 	}
 
-	public function getResponse(): Response { return $this->response; }
-	public function setResponse(Response $response) { return $this->response = $response; }
-	public function getRequest(): Request { return $this->request; }
-	public function getDataBag() { return $this->dataBag; }
-	public function getPathBag() { return $this->pathBag; }
+	public function prepend($segment, $arguments){ array_unshift($this->pipeline, ['responderClass' => $segment, 'arguments' => $arguments]); }
+
+	public function append($segment, $arguments){ array_push($this->pipeline, ['responderClass' => $segment, 'arguments' => $arguments]); }
+
+	public function getResponse(): Response{ return $this->response; }
+
+	public function setResponse(Response $response){ return $this->response = $response; }
+
+	public function getRequest(): Request{ return $this->request; }
+
+	public function getDataBag(){ return $this->dataBag; }
+
+	public function getPathBag(){ return $this->pathBag; }
 
 }

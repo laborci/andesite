@@ -26,6 +26,9 @@ abstract class Segment{
 	protected function redirect($url = "/", $status = 302){ $this->break(Redirect::class, ['url' => $url, 'status' => $status]); }
 	protected function break($responderClass, $arguments = []){ ( $this->runner )($responderClass, $arguments); }
 
+	protected function prepend($segment, $arguments = []){ $this->runner->prepend($segment, $arguments); }
+	protected function append($segment, $arguments = []){ $this->runner->append($segment, $arguments); }
+
 	abstract public function __invoke($method = null);
 
 	final protected function getRequest(): Request{ return $this->runner->getRequest(); }
