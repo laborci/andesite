@@ -1,11 +1,13 @@
 <?php namespace Andesite\GhostGenerator;
 
 use Andesite\Ghost\Field;
+use Andesite\Ghost\Validator\Instance;
 use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\PositiveOrZero;
 use Symfony\Component\Validator\Constraints\Type;
+use Valentine\Date;
 
 class DBFieldConverter{
 
@@ -50,10 +52,11 @@ class DBFieldConverter{
 				$validators[] = [Type::class, 'bool'];
 				break;
 			case Field::TYPE_DATE:
-				$validators[] = [Type::class, 'object'];
+				$validators[] = [Instance::class, Date::class];
 				break;
 			case Field::TYPE_DATETIME:
-				$validators[] = [Type::class, 'object'];
+			case Field::TYPE_TIME:
+				$validators[] = [Instance::class, \DateTime::class];
 				break;
 			case Field::TYPE_STRING:
 				$validators[] = [Type::class, 'string'];
