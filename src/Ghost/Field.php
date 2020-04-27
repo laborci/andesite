@@ -22,6 +22,8 @@ class Field{
 	public $getter = null;
 	public $setter = null;
 	public $options;
+	public $noInsert = false;
+	public $noUpdate = false;
 
 	public function __construct($name, $type, $options = null){
 		$this->name = $name;
@@ -68,9 +70,9 @@ class Field{
 		if ($value === null) return null;
 		switch ($this->type){
 			case self::TYPE_DATE:
-				return (function (Date $date){ return $date->format('Y-m-d'); })($value);
+				return ( function (Date $date){ return $date->format('Y-m-d'); } )($value);
 			case self::TYPE_DATETIME:
-				return (function (\DateTime $date){ return $date->format('Y-m-d H:i:s'); })($value);
+				return ( function (\DateTime $date){ return $date->format('Y-m-d H:i:s'); } )($value);
 			case self::TYPE_INT:
 				return intval($value);
 			case self::TYPE_ID:
@@ -78,13 +80,13 @@ class Field{
 			case self::TYPE_FLOAT:
 				return floatval($value);
 			case self::TYPE_BOOL:
-				return (int)((bool)$value);
+				return (int)( (bool)$value );
 			case self::TYPE_SET:
 				return join(',', $value);
 			case self::TYPE_JSON:
 				return json_encode($value);
 			case self::TYPE_TIME:
-				return (function (\DateTime $date){ return $date->format('H:i:s'); })($value);
+				return ( function (\DateTime $date){ return $date->format('H:i:s'); } )($value);
 		}
 		return $value;
 	}
@@ -108,7 +110,7 @@ class Field{
 			case self::TYPE_SET:
 				return $value;
 			case self::TYPE_JSON:
-				if(is_array($value)) return $value;
+				if (is_array($value)) return $value;
 				return json_decode($value, true);
 		}
 		return $value;
@@ -118,10 +120,10 @@ class Field{
 		if ($value === null || $this->getter === false) return null;
 		switch ($this->type){
 			case self::TYPE_DATE:
-				return (function (Date $date){ return $date->format(\DateTime::ISO8601); })($value);
+				return ( function (Date $date){ return $date->format(\DateTime::ISO8601); } )($value);
 			case self::TYPE_DATETIME:
 			case self::TYPE_TIME:
-				return (function (\DateTime $date){ return $date->format(\DateTime::ISO8601); })($value);
+				return ( function (\DateTime $date){ return $date->format(\DateTime::ISO8601); } )($value);
 			case self::TYPE_BOOL:
 				return (bool)$value;
 			case self::TYPE_INT:

@@ -17,13 +17,15 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	protected $id;
 
 	public function isExists(): bool{ return (bool)$this->id; }
-	public function isDeleted(): bool{ return $this->deleted; }
-	function __toString(){ return get_called_class() . ' ' . $this->id; }
 
+	public function isDeleted(): bool{ return $this->deleted; }
+
+	function __toString(){ return get_called_class() . ' ' . $this->id; }
 
 #region Model Creation
 
 	private static function model(): ?Model{ return static::$model; }
+
 	private static function setModel(Model $model){ return static::$model = $model; }
 
 	public static function init(){
@@ -33,6 +35,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		}
 		return static::model();
 	}
+
 	abstract static protected function createModel(): Model;
 
 #endregion
@@ -136,7 +139,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 	public function save(){
 		$errors = $this->validate(false);
-		if(count($errors)) throw new ValidationError($errors);
+		if (count($errors)) throw new ValidationError($errors);
 		if ($this->isExists()){
 			return $this->update();
 		}else{
@@ -158,7 +161,6 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $this->id;
 	}
 
-
 	/**
 	 * @return \Symfony\Component\Validator\ConstraintViolationList[]
 	 */
@@ -168,12 +170,19 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 #region Events
 	public function onBeforeDelete(){ return true; }
+
 	public function onAfterDelete(){ return true; }
+
 	public function onBeforeUpdate(){ return true; }
+
 	public function onAfterUpdate(){ return true; }
+
 	public function onBeforeInsert(){ return true; }
+
 	public function onAfterInsert(){ return true; }
+
 	public function onAttachmentAdded($data = null){ return true; }
+
 	public function onAttachmentRemoved($data = null){ return true; }
 #endregion
 

@@ -20,12 +20,14 @@ class DBFieldConverter{
 	public $descriptor;
 
 	public function __construct($descriptor){
+
+
 		$this->descriptor = $descriptor;
 		$this->name = $descriptor['COLUMN_NAME'];
 		$this->type = $descriptor['DATA_TYPE'];
 		$this->maxlength = $descriptor['CHARACTER_MAXIMUM_LENGTH'];
 		$this->nullable = $descriptor['IS_NULLABLE'] === 'YES';
-		$this->default = $descriptor['COLUMN_DEFAULT'];
+		$this->default = $descriptor['COLUMN_DEFAULT'] ?? null;
 		$this->primary = strpos($descriptor['COLUMN_KEY'], 'PRI') !== false;
 
 		$this->fieldType = $this->getFieldType($descriptor);
@@ -106,12 +108,12 @@ class DBFieldConverter{
 
 	public function getFieldType($descriptor): string{
 
-		if ($descriptor['COLUMN_COMMENT'] == 'json') return Field::TYPE_JSON;
+		if (strpos($descriptor['COLUMN_COMMENT'], 'json') !== false) return Field::TYPE_JSON;
 		if ($descriptor['COLUMN_TYPE'] == 'tinyint(1)') return Field::TYPE_BOOL;
 		if (strpos($descriptor['COLUMN_TYPE'], 'int(11) unsigned') === 0 && (
 				substr($descriptor['COLUMN_NAME'], -2) == 'Id' ||
 				$descriptor['COLUMN_NAME'] == 'id' ||
-				$descriptor['COLUMN_COMMENT'] == 'id'
+				strpos($descriptor['COLUMN_COMMENT'],'id') !== false
 			)
 		) return Field::TYPE_ID;
 

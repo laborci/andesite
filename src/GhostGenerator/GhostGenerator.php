@@ -64,6 +64,9 @@ class GhostGenerator{
 
 			$type = '';
 			switch ($field->type){
+				case Field::TYPE_JSON:
+					$type = 'array';
+					break;
 				case Field::TYPE_BOOL:
 					$type = 'boolean';
 					break;
@@ -71,6 +74,7 @@ class GhostGenerator{
 					$type = '\Valentine\Date';
 					break;
 				case Field::TYPE_DATETIME:
+				case Field::TYPE_TIME:
 					$type = '\DateTime';
 					break;
 				case Field::TYPE_ENUM:
@@ -88,7 +92,7 @@ class GhostGenerator{
 					$type = 'float';
 					break;
 			}
-			$properties[] = "\t" . "/** @var {$type} {$field->name} */";
+			$properties[] = "\t" . "/** @var {$type} \${$field->name} */";
 			$properties[] = "\t" . ( $field->protected ? 'protected' : 'public' ) . " \${$field->name};";
 
 			if ($field->protected){
