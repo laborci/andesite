@@ -27,21 +27,21 @@ class DumpDB extends CliModule{
 				$dumper = ConnectionFactory::Module()->getDumper($input->getOption('database'));
 
 				if ($input->getOption('structure') === false && $input->getOption('data') === false){
-					$file =  'snapshot.' . $input->getOption('database') . '.' . time() . '.sql';
+					$file =  'snapshot.' . $input->getOption('database') . '.' . date('Y-m-d.H-i-s') . '.sql';
 					$style->title('dumping snapshot: ' . $file);
 					$dumper->dump($file);
 					$style->success('done');
 				}
 
 				if ($input->getOption('structure') !== false){
-					$file =  'structure.' . $input->getOption('database') . '.' . time() . '.sql';
+					$file =  'structure.' . $input->getOption('database') . '.' . date('Y-m-d.H-i-s') . '.sql';
 					$style->title('dumping structure: ' . $file);
 					$dumper->structure($file);
 					$style->success('done');
 				}
 
 				if ($input->getOption('data') !== false){
-					$file =  'data.' . $input->getOption('database') . '.' . time() . '.sql';
+					$file =  'data.' . $input->getOption('database') . '.' . date('Y-m-d.H-i-s') . '.sql';
 					$style->title('dumping data' . $file);
 					$dumper->data($file);
 					$style->success('done');

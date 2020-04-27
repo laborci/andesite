@@ -14,6 +14,7 @@ class Field{
 	const TYPE_SET = 'SET';
 	const TYPE_FLOAT = 'FLOAT';
 	const TYPE_JSON = 'JSON';
+	const TYPE_TIME = 'TIME';
 
 	public $name;
 	public $type;
@@ -57,6 +58,8 @@ class Field{
 				return !$value ? [] : explode(',', $value);
 			case self::TYPE_JSON:
 				return json_decode($value, true);
+			case self::TYPE_TIME:
+				return new \DateTime($value);
 		}
 		return $value;
 	}
@@ -80,6 +83,8 @@ class Field{
 				return join(',', $value);
 			case self::TYPE_JSON:
 				return json_encode($value);
+			case self::TYPE_TIME:
+				return (function (\DateTime $date){ return $date->format('H:i:s'); })($value);
 		}
 		return $value;
 	}
@@ -90,6 +95,7 @@ class Field{
 			case self::TYPE_DATE:
 				return new Date($value);
 			case self::TYPE_DATETIME:
+			case self::TYPE_TIME:
 				return \DateTime::createFromFormat(\DateTime::ISO8601, $value);
 			case self::TYPE_INT:
 				return intval($value);
@@ -114,6 +120,7 @@ class Field{
 			case self::TYPE_DATE:
 				return (function (Date $date){ return $date->format(\DateTime::ISO8601); })($value);
 			case self::TYPE_DATETIME:
+			case self::TYPE_TIME:
 				return (function (\DateTime $date){ return $date->format(\DateTime::ISO8601); })($value);
 			case self::TYPE_BOOL:
 				return (bool)$value;
