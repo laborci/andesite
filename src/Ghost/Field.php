@@ -96,8 +96,9 @@ class Field{
 		switch ($this->type){
 			case self::TYPE_DATE:
 				return new Date($value);
-			case self::TYPE_DATETIME:
 			case self::TYPE_TIME:
+				return new \DateTime($value);
+			case self::TYPE_DATETIME:
 				return \DateTime::createFromFormat(\DateTime::ISO8601, $value);
 			case self::TYPE_INT:
 				return intval($value);
@@ -121,8 +122,9 @@ class Field{
 		switch ($this->type){
 			case self::TYPE_DATE:
 				return ( function (Date $date){ return $date->format(\DateTime::ISO8601); } )($value);
-			case self::TYPE_DATETIME:
 			case self::TYPE_TIME:
+				return ( function (\DateTime $date){ return $date->format('H:i:s'); } )($value);
+			case self::TYPE_DATETIME:
 				return ( function (\DateTime $date){ return $date->format(\DateTime::ISO8601); } )($value);
 			case self::TYPE_BOOL:
 				return (bool)$value;

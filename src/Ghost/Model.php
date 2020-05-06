@@ -35,28 +35,37 @@ class Model implements Decorator{
 	/** @var bool */
 	protected $mutable = true;
 
+	/** @var \Symfony\Component\Validator\Constraint[] */
 	private $validators = [];
+
+	/**
+	 * @return \Symfony\Component\Validator\Constraint[]
+	 */
+	public function getValidators(): array{
+		return $this->validators;
+	}
+	
 	final public function addValidator($field, Constraint $validator){
 		if (!array_key_exists($field, $this->validators)) $this->validators[$field] = [];
 		$this->validators[$field][] = $validator;
 	}
 
-	public function validate(Ghost $item, $onlymessage = true){
-		$validator = Validation::createValidator();
-		$errors = [];
-		foreach ($this->validators as $field => $validators){
-			$violations = $validator->validate($item->$field, $validators);
-			for ($i = 0; $i < $violations->count(); $i++){
-				$error = [
-					'field'   => $field,
-					'message' => $violations->get($i)->getMessage(),
-				];
-				if (!$onlymessage) $error['violation'] = $violations->get($i);
-				$errors[] = $error;
-			}
-		}
-		return $errors;
-	}
+//	public function validate(Ghost $item, $onlymessage = true){
+//		$validator = Validation::createValidator();
+//		$errors = [];
+//		foreach ($this->validators as $field => $validators){
+//			$violations = $validator->validate($item->$field, $validators);
+//			for ($i = 0; $i < $violations->count(); $i++){
+//				$error = [
+//					'field'   => $field,
+//					'message' => $violations->get($i)->getMessage(),
+//				];
+//				if (!$onlymessage) $error['violation'] = $violations->get($i);
+//				$errors[] = $error;
+//			}
+//		}
+//		return $errors;
+//	}
 
 	public function __construct($ghost){
 		$table = $ghost::Table;

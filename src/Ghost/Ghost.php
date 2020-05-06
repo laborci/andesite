@@ -4,6 +4,7 @@ use Andesite\Ghost\Exception\ValidationError;
 use JsonSerializable;
 use Andesite\Attachment\AttachmentOwnerInterface;
 use Andesite\Ghost\Exception\InsufficientData;
+use Symfony\Component\Validator\Validation;
 /**
  * @property-read int   id
  * @property-read Model $model
@@ -138,24 +139,26 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	}
 
 	public function save(){
-		$errors = $this->validate(false);
-		if (count($errors)) throw new ValidationError($errors);
-		if ($this->isExists()){
-			return $this->update();
-		}else{
-			return $this->insert();
-		}
+		if (!static::model()->isMutable()) return false;
+		if ($this->onBeforeSave() === false) return false;
+		$id = $this->isExists() ? $this->update() : $this->insert();
+		$this->onAfterSave();
+		return $id;
 	}
 
 	final private function update(){
-		if ($this->onBeforeUpdate() === false || !static::model()->isMutable()) return false;
+		if ($this->onBeforeUpdate() === false) return false;
+		$errors = $this->validate(false);
+		if (count($errors)) throw new ValidationError($errors);
 		static::model()->repository->update($this);
 		$this->onAfterUpdate();
 		return $this->id;
 	}
 
 	final private function insert(){
-		if ($this->onBeforeInsert() === false || !static::model()->isMutable()) return false;
+		if ($this->onBeforeInsert() === false) return false;
+		$errors = $this->validate(false);
+		if (count($errors)) throw new ValidationError($errors);
 		$this->id = static::model()->repository->insert($this);
 		$this->onAfterInsert();
 		return $this->id;
@@ -164,7 +167,24 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	/**
 	 * @return \Symfony\Component\Validator\ConstraintViolationList[]
 	 */
-	public function validate($onlymessage = true){ return static::$model->validate($this, $onlymessage); }
+	public function validate($onlymessage = true){
+		$validators = static::model()->getValidators();
+		$validator = Validation::createValidator();
+		$errors = [];
+		foreach ($validators as $field => $validators){
+			$violations = $validator->validate($this->$field, $validators);
+			for ($i = 0; $i < $violations->count(); $i++){
+				$error = [
+					'field'   => $field,
+					'message' => $violations->get($i)->getMessage(),
+				];
+				if (!$onlymessage) $error['violation'] = $violations->get($i);
+				$errors[] = $error;
+			}
+		}
+		return $errors;
+		//return static::$model->validate($this, $onlymessage);
+	}
 
 #endregion
 
@@ -172,6 +192,10 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	public function onBeforeDelete(){ return true; }
 
 	public function onAfterDelete(){ return true; }
+
+	public function onBeforeSave(){ return true; }
+
+	public function onAfterSave(){ return true; }
 
 	public function onBeforeUpdate(){ return true; }
 

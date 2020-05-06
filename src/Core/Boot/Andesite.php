@@ -28,7 +28,7 @@ class Andesite{
 		return $mission;
 	}
 
-	public static function setup(string $root, string $ini, string $env, ClassLoader $classLoader):self {
+	public static function setup(string $root, string $ini, string $env, ClassLoader $classLoader) {
 		putenv('root=' . realpath($root) . '/');
 		putenv('context=' . ( http_response_code() ? 'WEB' : 'CLI' ));
 		putenv('env-file=' . getenv('root') . $env);
