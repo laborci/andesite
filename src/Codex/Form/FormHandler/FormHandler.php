@@ -24,6 +24,8 @@ class FormHandler implements JsonSerializable{
 	 */
 	protected $sections;
 
+	protected $onSave = null;
+
 	protected $JSplugins = [];
 	protected $labelField = null;
 
@@ -44,6 +46,7 @@ class FormHandler implements JsonSerializable{
 	public function setLabelField(Field $field){ $this->labelField = $field->name; }
 	public function setItemConverter(ItemConverterInterface $itemConverter){ $this->itemConverter = $itemConverter; }
 	public function setItemDataImporter(ItemDataImporterInterface $itemDataImporter){ $this->itemDataImporter = $itemDataImporter; }
+	public function setOnSave(callable $function){ $this->onSave = $function; }
 
 	public function section($label){
 		$section = new FormSection($label, $this->admin);
@@ -86,6 +89,10 @@ class FormHandler implements JsonSerializable{
 		}else{
 			$newid = $this->dataProvider->createItem($data, $this->itemDataImporter);
 		}
+		if(!is_null($this->onSave)){
+			($this->onSave)($newid, $data);
+		}
+
 		return $newid;
 	}
 

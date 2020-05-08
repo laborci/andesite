@@ -49,7 +49,7 @@ class SmartAccess{
 			}
 			$data[$key] = [$this->escapeSQLEntity($key), $value];
 		}
-		$this->execute($ignore === true ? 'INSERT IGNORE ' : 'INSERT ' .
+		$this->execute(($ignore === true ? 'INSERT IGNORE ' : 'INSERT ') .
 			'INTO ' . $this->escapeSQLEntity($table) . ' ' .
 			'(' . implode(', ', array_column($data, 0)) . ') ' .
 			'VALUE (' . implode(', ', array_column($data, 1)) . ')'
