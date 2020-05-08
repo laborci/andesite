@@ -1,9 +1,8 @@
 <?php namespace Andesite\Codex\Action;
 
-use Andesite\Codex\Form\AdminRegistry;
 use Andesite\Core\Boot\Andesite;
 use Andesite\Mission\Web\Responder\JsonResponder;
-use Andesite\Zuul\Auth\AuthService;
+use Andesite\Zuul\Interfaces\AuthServiceInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class Responder extends JsonResponder{
@@ -12,12 +11,12 @@ abstract class Responder extends JsonResponder{
 	protected $adminDescriptor;
 	/** @var \Andesite\Codex\Form\FormDecorator */
 	protected $formDecorator;
-	/** @var AuthService */
+	/** @var AuthServiceInterface */
 	protected $authService;
 	/** @var \Andesite\Codex\Form\AdminRegistry */
 	private $adminRegistry;
 
-	public function __construct(AuthService $authService){
+	public function __construct(AuthServiceInterface $authService){
 		/** @var \Andesite\Codex\CodexMission $mission */
 		$mission = Andesite::mission();
 		$this->authService = $authService;
