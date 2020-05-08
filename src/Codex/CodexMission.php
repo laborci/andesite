@@ -11,6 +11,7 @@ use Andesite\Mission\Web\WebMission;
 use Andesite\TwigResponder\TwigResponder;
 use Andesite\Util\CodeFinder\CodeFinder;
 use Andesite\Zuul\Auth\Auth;
+use Andesite\Zuul\Auth\AuthService;
 use Andesite\Zuul\Interfaces\AuthServiceInterface;
 use Andesite\Zuul\Web\Action\Login;
 use Andesite\Zuul\Web\Action\Logout;
