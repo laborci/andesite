@@ -36,19 +36,41 @@ class ApiManager extends Segment{
 			$reader = ServiceContainer::get(Reader::class);
 			$reflection = new \ReflectionClass($class);
 
-			if ($methodCandidate && $reflection->hasMethod($methodCandidate)){
-				$method = $reflection->getMethod($methodCandidate);
-				if ($reader->getAnnotations($method)->get('accepts') !== $httpMethod) throw new Exception('', 405);
-				array_shift($params);
-			}else{
-				$methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
-				foreach ($methods as $method){
-					$method = $httpMethod === $reader->getAnnotations($method)->get('on') ? $method : null;
-					if (!is_null($method)) break;
+			$map = [];
+			$onMap = [];
+			$methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+			foreach ($methods as $method){
+				$annotations = $reader->getAnnotations($method);
+				if ($annotations->get('accepts')){
+					$methodName = $annotations->has('action') ? $annotations->get('action') : $method->name;
+					$map[strtolower($annotations->get('accepts')).':'.$methodName] = $method;
+				}elseif ($annotations->has('on')){
+					$onMap[strtolower($annotations->get('on'))] = $method;
 				}
 			}
 
-			if (is_null($method)) throw new Exception('', 404);
+			if(array_key_exists($key = strtolower($httpMethod.':'.$methodCandidate), $map)){
+				$method = $map[$key];
+				array_shift($params);
+			}elseif(array_key_exists($httpMethod, $onMap)){
+				$method = $onMap[$httpMethod];
+			}else{
+				throw new Exception('', 404);
+			}
+
+//			if ($methodCandidate && $reflection->hasMethod($methodCandidate)){
+//				$method = $reflection->getMethod($methodCandidate);
+//				if ($reader->getAnnotations($method)->get('accepts') !== $httpMethod) throw new Exception('', 405);
+//				array_shift($params);
+//			}else{
+//				$methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+//				foreach ($methods as $method){
+//					$method = $httpMethod === $reader->getAnnotations($method)->get('on') ? $method : null;
+//					if (!is_null($method)) break;
+//				}
+//			}
+
+//			if (is_null($method)) throw new Exception('', 404);
 			if (count($params) < $method->getNumberOfRequiredParameters()) throw new Exception('', 400);
 
 			$this->prepend([$class, $method->getName()], $params);
@@ -67,4 +89,5 @@ class ApiManager extends Segment{
 	}
 }
 
-class Exception extends \Exception{}
+class Exception extends \Exception{
+}
