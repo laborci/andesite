@@ -61,6 +61,7 @@ abstract class CodexMission extends WebMission{
 	public function importForms(AdminRegistry $registry){ $this->automap($this->formAutomap, $registry); }
 
 	public function setup($config){
+		if(!is_array($config)) $config = [];
 		$config = array_merge(
 			[
 				"title"             => "Admin",
