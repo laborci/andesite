@@ -88,7 +88,6 @@ class Andesite{
 		if (is_array($missions)){
 			ksort($missions);
 			$host = ServiceContainer::get(Request::class)->getHttpHost();
-			ksort($missions);
 			foreach ($missions as $mission){
 				$patterns = is_array($mission['pattern']) ? $mission['pattern'] : [$mission['pattern']];
 				foreach ($patterns as $pattern) if (fnmatch($pattern, $host)){
@@ -97,7 +96,6 @@ class Andesite{
 					}
 					$this->mission = $mission['mission'];
 					ModuleManager::register($mission['mission'], array_key_exists('config', $mission) ? $mission['config'] : []);
-					break 2;
 				}
 				if($this->mission) break;
 			}

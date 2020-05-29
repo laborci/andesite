@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 abstract class AbstractRemoteLogSender{
 
 	public function __construct($address, $requestId, $method, $host, $path){
-		$this->address = $address . '/';
+		$this->address = $address ;
 		$this->requestId = $requestId;
 		$this->method = $method;
 		$this->host = $host;

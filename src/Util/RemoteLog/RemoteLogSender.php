@@ -12,7 +12,7 @@ class RemoteLogSender extends AbstractRemoteLogSender{
 
 	protected function send($address, $message){
 		$post_string = json_encode($message);
-		$parts = parse_url($address);
+		$parts = parse_url($address.'/');
 		try{
 			$fp = @fsockopen($parts['host'], isset($parts['port']) ? $parts['port'] : 80, $errno, $errstr, 30);
 			if ($fp){
