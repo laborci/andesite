@@ -69,13 +69,11 @@ abstract class CodexMission extends WebMission{
 				"login-placeholder" => "email",
 				"role"              => "Admin",
 				"form-automap"      => "Application\AdminCodex\Form",
-				"frontend-prefix"   => "~admin/",
-				"who-am-i"          => CodexWhoAmI::class,
-				"auth-service"      => AuthService::class,
+				"frontend-prefix"   => "~admin/"
 			], $config);
 
-		ServiceContainer::shared(AuthServiceInterface::class, $config["auth-service"]);
-		ServiceContainer::shared(CodexWhoAmIInterface::class, $config["who-am-i"]);
+		ServiceContainer::shared(AuthServiceInterface::class, AuthService::class);
+		ServiceContainer::shared(CodexWhoAmIInterface::class, CodexWhoAmIInterface::class);
 
 		$this->title = $config['title'];
 		$this->icon = $config['icon'];

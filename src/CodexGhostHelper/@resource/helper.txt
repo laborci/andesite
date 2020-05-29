@@ -8,7 +8,7 @@ use Andesite\Codex\Interfaces\DataProviderInterface;
 /**
 {{annotations}}
  */
-abstract class {{name}}GhostCodexHelper extends AdminDescriptor{
+abstract class {{name}}Helper extends AdminDescriptor{
 
 
 {{fields}}

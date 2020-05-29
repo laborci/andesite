@@ -13,7 +13,7 @@ class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface
 	/** @var RemoteLogSender  */
 	private $sender;
 
-	public function __construct(RemoteLogSender $sender){
+	public function __construct(AbstractRemoteLogSender $sender){
 		$this->sender = $sender;
 	}
 

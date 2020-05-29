@@ -86,6 +86,7 @@ class Andesite{
 
 		/* Find and launch active mission */
 		if (is_array($missions)){
+			ksort($missions);
 			$host = ServiceContainer::get(Request::class)->getHttpHost();
 			ksort($missions);
 			foreach ($missions as $mission){
@@ -98,6 +99,7 @@ class Andesite{
 					ModuleManager::register($mission['mission'], array_key_exists('config', $mission) ? $mission['config'] : []);
 					break 2;
 				}
+				if($this->mission) break;
 			}
 		}
 		ModuleManager::load();

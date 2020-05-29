@@ -8,40 +8,11 @@ use Andesite\Util\ErrorHandler\FatalErrorHandlerInterface;
 
 use Symfony\Component\HttpFoundation\Request;
 
-class RemoteLogSender{
+class RemoteLogSender extends AbstractRemoteLogSender{
 
-	private $address;
-	private $requestId;
-	private $method;
-	private $host;
-	private $path;
-
-
-	public function __construct($address, $requestId, $method, $host, $path){
-		$this->address = $address . '/';
-		$this->requestId = $requestId;
-		$this->method = $method;
-		$this->host = $host;
-		$this->path = $path;
-	}
-
-
-	public function log($type, $message){
-		$this->post_without_wait($this->address, [
-			'request' => [
-				'id'     => $this->requestId,
-				'method' => $this->method,
-				'host'   => $this->host,
-				'path'   => $this->path,
-			],
-			'type'    => $type,
-			'message' => $message,
-		]);
-	}
-
-	protected function post_without_wait($url, $message){
+	protected function send($address, $message){
 		$post_string = json_encode($message);
-		$parts = parse_url($url);
+		$parts = parse_url($address);
 		try{
 			$fp = @fsockopen($parts['host'], isset($parts['port']) ? $parts['port'] : 80, $errno, $errstr, 30);
 			if ($fp){
