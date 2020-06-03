@@ -22,6 +22,7 @@ class PipelineRunner{
 		$this->dataBag = $dataBag;
 		$this->pipeline = $pipeline;
 		$this->response = new Response();
+		ServiceContainer::value(Response::class, $this->response);
 	}
 
 	public function __invoke($responderClass = null, $arguments = []){

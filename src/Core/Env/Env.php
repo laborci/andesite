@@ -13,7 +13,6 @@ class Env implements SharedService {
 	private $env = [];
 
 	public function __construct(){
-		if(Andesite::Service()->isDevMode()) EnvLoader::Service()->rebuildCache(false);
 		$this->load(getenv('env-file'));
 	}
 

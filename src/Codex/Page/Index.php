@@ -21,8 +21,8 @@ class Index extends SmartPageResponder {
 			'icon'              => $mission->getIcon(),
 			'login-placeholder' => $mission->getLoginPlaceholder()
 		]);
-		$this->getDataBag()->set('user', $mission->getWhoAmI()->getName());
-		$this->getDataBag()->set('avatar', $mission->getWhoAmI()->getAvatar());
+		$this->set('user', $mission->getUserName());
+		$this->set('avatar', $mission->getUserAvatar());
 	}
 
 }

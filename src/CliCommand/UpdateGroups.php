@@ -2,7 +2,7 @@
 
 use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
-use Andesite\Zuul\RoleManager\RoleManager;
+use Andesite\Auth\RoleManager\RoleManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;

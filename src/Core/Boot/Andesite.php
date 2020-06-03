@@ -41,6 +41,7 @@ class Andesite{
 
 	public function __construct(){
 
+		$this->devmode = file_exists(getenv('root').'.devmode');
 		$this->requestId = uniqid();
 
 		/* Register Andesite service */
@@ -48,9 +49,8 @@ class Andesite{
 
 		/** @var Env $env */
 		$env = ServiceContainer::get(Env::class);
-		if($env->get('sys.devmode')) $env->reload();
+		if($this->devmode) $env->reload();
 
-		$this->devmode = $env->get('sys.devmode');
 
 		/* Setup env */
 		$env->set('root', getenv('root'));

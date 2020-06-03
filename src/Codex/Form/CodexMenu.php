@@ -1,6 +1,6 @@
 <?php namespace Andesite\Codex\Form;
 
-use Andesite\Codex\Interfaces\CodexWhoAmIInterface;
+use Andesite\Codex\Interfaces\AuthInterface;
 use Andesite\Core\ServiceManager\ServiceContainer;
 
 class CodexMenu{
@@ -38,17 +38,17 @@ class CodexMenu{
 		return $submenu;
 	}
 
-	public function extract(CodexWhoAmIInterface $whoAmI){
+	public function extract(AuthInterface $auth){
 		$extract = [];
 		foreach ($this->items as $item){
 			if (is_object($item['data']) && $item['data'] instanceof static){
 				$extractedItem = [
 					'label'   => $item['label'],
 					'icon'    => $item['icon'],
-					'submenu' => $item['data']->extract($whoAmI),
+					'submenu' => $item['data']->extract($auth),
 				];
 				if (!empty($extractedItem['submenu'])) $extract[] = $extractedItem;
-			}elseif ($whoAmI->checkRole($item['role'])){
+			}elseif ($auth->hasRole($item['role'])){
 				$extract[] = $item;
 			}
 		}

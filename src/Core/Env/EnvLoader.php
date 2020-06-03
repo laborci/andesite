@@ -18,9 +18,10 @@ class EnvLoader implements SharedService{
 		$latestBuild = @filemtime($cacheFile);
 		$dir = new \RecursiveDirectoryIterator(getenv('ini-path'));
 		$iterator = new \RecursiveIteratorIterator($dir);
-		foreach ($iterator as $fileinfo){
+		foreach ($iterator as $fileinfo) if($fileinfo->isFile()){
 			if ($fileinfo->getMTime() > $latestBuild || $force){
 				file_put_contents($cacheFile, "<?php return " . var_export($this->load(), true) . ';');
+				file_put_contents(str_replace('.php','.json',$cacheFile), json_encode($this->load(), JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES + JSON_UNESCAPED_UNICODE));
 				return false;
 			}
 		}

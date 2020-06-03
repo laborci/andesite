@@ -13,10 +13,7 @@ abstract class WebMission extends Mission{
 	public function __construct(Router $router){ $this->router = $router; }
 
 	public function run($config){
-		//EventManager::fire(RoutingEvent::BEFORE, $this->router);
 		$this->route($this->router);
-		//EventManager::fire(RoutingEvent::FINISHED, $this->router);
-		//EventManager::fire(RoutingEvent::NOTFOUND, $this->router);
 		die();
 	}
 

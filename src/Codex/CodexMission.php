@@ -1,43 +1,36 @@
 <?php namespace Andesite\Codex;
 
+use Andesite\Codex\Action\Login;
+use Andesite\Codex\Action\Logout;
 use Andesite\Codex\Form\AdminRegistry;
 use Andesite\Codex\Form\CodexMenu;
-use Andesite\Codex\Interfaces\CodexWhoAmIInterface;
+use Andesite\Codex\Interfaces\AuthInterface;
+use Andesite\Codex\Middleware\AuthCheck;
+use Andesite\Codex\Middleware\RoleCheck;
 use Andesite\Codex\Page\Index;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Ghost\GhostManager;
+use Andesite\Mission\Web\Action\NotAuthorized;
 use Andesite\Mission\Web\Routing\Router;
 use Andesite\Mission\Web\WebMission;
 use Andesite\TwigResponder\TwigResponder;
 use Andesite\Util\CodeFinder\CodeFinder;
-use Andesite\Zuul\Auth\Auth;
-use Andesite\Zuul\Auth\AuthService;
-use Andesite\Zuul\Interfaces\AuthServiceInterface;
-use Andesite\Zuul\Web\Action\Login;
-use Andesite\Zuul\Web\Action\Logout;
-use Andesite\Zuul\Web\Middleware\AuthCheck;
-use Andesite\Zuul\Web\Middleware\RoleCheck;
-use Application\AdminCodex\Form\ArticlePodcastCodex;
-use Application\Service\Auth\CodexWhoAmI;
 
 abstract class CodexMission extends WebMission{
 
 	protected $frontendPrefix;
-	protected $role;
 	protected $icon;
 	protected $loginPlaceholder;
 	protected $title;
+	protected $userName;
+	protected $userAvatar;
 	/** @var \Andesite\Codex\Form\AdminRegistry */
 	protected $adminRegistry;
-	/** @var \Andesite\Codex\Interfaces\CodexWhoAmIInterface */
-	protected $whoAmI;
 	protected $formAutomap;
-	protected $whoAmIClass;
 
 	abstract protected function menu(CodexMenu $menu);
 
-	protected function load(Auth $auth, TwigResponder $twigResponder){
-		$this->whoAmI = $this->getWhoAmI();
+	protected function load(TwigResponder $twigResponder){
 		$twigResponder->addTwigPath('codex', __DIR__ . '/@resource/');
 		$this->adminRegistry = new AdminRegistry();
 		$this->importForms($this->adminRegistry);
@@ -46,7 +39,7 @@ abstract class CodexMission extends WebMission{
 	public function getMenu(){
 		$menu = new CodexMenu();
 		$this->menu($menu);
-		return $menu->extract($this->whoAmI);
+		return $menu->extract(ServiceContainer::get(AuthInterface::class));
 	}
 
 	protected function automap($namespace, AdminRegistry $registry){
@@ -67,37 +60,26 @@ abstract class CodexMission extends WebMission{
 				"title"             => "Admin",
 				"icon"              => "fas fa-user-secret",
 				"login-placeholder" => "email",
-				"role"              => "Admin",
 				"form-automap"      => "Application\AdminCodex\Form",
 				"frontend-prefix"   => "~admin/"
 			], $config);
 
-		ServiceContainer::shared(AuthServiceInterface::class, AuthService::class);
-		ServiceContainer::shared(CodexWhoAmIInterface::class, CodexWhoAmIInterface::class);
-
 		$this->title = $config['title'];
 		$this->icon = $config['icon'];
 		$this->loginPlaceholder = $config['login-placeholder'];
-		$this->role = $config['role'];
 		$this->formAutomap = $config['form-automap'];
 		$this->frontendPrefix = $config['frontend-prefix'];
+		$this->userName = 'admin';
+		$this->userAvatar = '';
 	}
 
 	public function route(Router $router){
 
-		$router->post("/login", Login::class, ['role' => $this->role])();
-		$router->pipe(AuthCheck::class, AuthCheck::config(\Andesite\Codex\Page\Login::class));
-
-		if ($this->role){
-			$router->pipe(RoleCheck::class, RoleCheck::config(\Andesite\Codex\Page\Login::class, $this->role, true));
-		}
-		$router->post("/logout", Logout::class)();
-
-		// PAGES
-		GhostManager::Module()->routeThumbnail($router);
-		$router->get("/", Index::class)();
+		$router->post("/login", Login::class)();
 
 		// API
+		$router->pipe(AuthCheck::class, AuthCheck::config(NotAuthorized::class));
+
 		$router->get('/menu', Action\CodexMenu::class)();
 		$router->get('/{form}/codexinfo', Action\CodexInfo::class)();
 		$router->post('/{form}/get-list/{page}', Action\CodexGetList::class)();
@@ -111,25 +93,22 @@ abstract class CodexMission extends WebMission{
 		$router->post('/{form}/attachment/copy/{id}', Action\CodexAttachmentCopy::class)();
 		$router->post('/{form}/attachment/delete/{id}', Action\CodexAttachmentDelete::class)();
 
+		// PAGES
+		$router->clearPipeline();
+		$router->pipe(AuthCheck::class, AuthCheck::config(\Andesite\Codex\Page\Login::class));
+		$router->post("/logout", Logout::class)();
+		GhostManager::Module()->routeThumbnail($router);
 		$router->get('/', Page\Index::class)();
 	}
 
 	public function getFrontendPrefix(){ return $this->frontendPrefix; }
-
-	public function getRole(){ return $this->role; }
-
 	public function getIcon(){ return $this->icon; }
-
 	public function getLoginPlaceholder(){ return $this->loginPlaceholder; }
-
 	public function getTitle(){ return $this->title; }
-
 	/** @return \Andesite\Codex\Form\AdminRegistry */
 	public function getAdminRegistry(): \Andesite\Codex\Form\AdminRegistry{ return $this->adminRegistry; }
-
-	/** @return \Andesite\Codex\Interfaces\CodexWhoAmIInterface */
-	public function getWhoAmI(): \Andesite\Codex\Interfaces\CodexWhoAmIInterface{ return ServiceContainer::get(CodexWhoAmIInterface::class); }
-
 	public function getFormAutomap(){ return $this->formAutomap; }
+	public function getUserName(){return $this->userName;}
+	public function getUserAvatar(){return $this->userAvatar;}
 	
 }

@@ -12,7 +12,9 @@ class RemoteLogSenderSocket extends AbstractRemoteLogSender{
 
 	protected function send($address, $message){
 		$socket = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
-		fwrite($socket, json_encode($message));
+		$message = json_encode($message);
+		$pieces = str_split($message, 1024);
+		foreach ($pieces as $piece) fwrite($socket, $piece);
 		fclose($socket);
 	}
 
