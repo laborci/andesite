@@ -1,9 +1,11 @@
 <?php namespace Andesite\Auth;
 
+use Andesite\Mission\Web\Routing\Exception;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
+use Throwable;
 
 class JWT{
 
@@ -37,6 +39,12 @@ class JWT{
 	 * @param string $token
 	 * @return \Lcobucci\JWT\Token\Plain
 	 */
-	public function parse(string $token){ return $this->config->getParser()->parse($token); }
+	public function parse(string $token):?\Lcobucci\JWT\Token\Plain{
+		try{
+			return $this->config->getParser()->parse($token);
+		}catch (Throwable $exception){
+			return null;
+		}
+	}
 
 }

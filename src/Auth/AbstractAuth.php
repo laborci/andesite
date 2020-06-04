@@ -54,19 +54,25 @@ abstract class AbstractAuth implements SharedService, AuthInterface{
 	}
 
 	public function restoreBySession(): ?UserInterface{
-		return ( $id = $this->session->getUserId() ) ? $this->restore($id) : null;
+		$token = $this->session->getUserToken();
+		$user = ( $token ) ? $this->restoreByToken($token) : null;
+		if (is_null($user)) $this->session->forget();
+
+		return $user;
 	}
 
 	public function restoreByToken(string $token): ?UserInterface{
 		$token = $this->jwt->parse($token);
+		if (is_null($token)) return null;
 		$claims = $token->claims();
 		return ( !$token->isExpired(new \DateTime()) && $this->validateToken($claims) ) ? $this->restore($claims->get('IDENTIFIER')) : null;
 	}
 
 	protected function register(?UserInterface $user): ?UserInterface{
 		if (is_null($user) || $this->hasLoginAccess($user) !== true) return null;
-		$this->session->setUserId($user->getIdentifier());
 		$this->user = $user;
+		$token = $this->createAuthToken("+ 30 days");
+		$this->session->setUserToken($token);
 		return $user;
 	}
 
@@ -83,9 +89,12 @@ abstract class AbstractAuth implements SharedService, AuthInterface{
 		$request = ServiceContainer::get(Request::class);
 
 		if (!is_null($this->user)) return $this->user;
+
 		$token = $request->cookies->get($this->autologinCookie);
 		if (is_null($token)) return null;
+
 		$user = $this->restoreByToken($token);
+
 		if (is_null($user)) $this->clearAutologin($response);
 		return $user;
 	}
@@ -114,6 +123,8 @@ abstract class AbstractAuth implements SharedService, AuthInterface{
 	}
 
 	public function getTokenClaims(string $token): ?\Lcobucci\JWT\Token\DataSet{
+		$token = $this->jwt->parse($token);
+		if (is_null($token)) return null;
 		return !( $token = $this->jwt->parse($token) )->isExpired(new DateTime()) ? $token->claims() : null;
 	}
 

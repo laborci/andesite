@@ -59,7 +59,14 @@ class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface
 		}
 	}
 
-	public function dump($data){ $this->sender->log('info', $data); }
+	public function dump(...$data){
+		$trace = debug_backtrace();
+		$this->sender->log('info', [
+			'file'=> $trace[1]['file'],
+			'line'=> $trace[1]['line'],
+			'message'=>count($data) === 1 ? $data[0] : $data
+		]);
+	}
 	public function logSql($sql){ $this->sender->log('sql', $sql); }
 
 	protected function friendlyErrorType($type){

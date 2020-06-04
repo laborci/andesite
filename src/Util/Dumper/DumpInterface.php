@@ -1,5 +1,5 @@
 <?php namespace Andesite\Util\Dumper;
 
 interface DumpInterface{
-	public function dump($message);
+	public function dump(...$message);
 }
