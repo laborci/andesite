@@ -75,7 +75,7 @@ class ExtractApi extends CliModule{
 
 					$endpointMethod .= "\t" . " function(" . join(", ", array_keys($endpoint['params'])) . "){\n";
 					if ($endpoint['required']) $endpointMethod .= "\t\tif(arguments.length < " . $endpoint['required'] . ") throw new Error();\n";
-					$endpointMethod .= "\t\treturn \"/" . $endpoint['url'] . ( !empty($endpoint['params']) ? "/\" + [...arguments].join('/')" : "\"" ) . ";\n";
+					$endpointMethod .= "\t\treturn \"/" . $endpoint['url'] . ( !empty($endpoint['params']) ? "\" + (arguments.length ? \"/\" : \"\") + [...arguments].join('/')" : "\"" ) . ";\n";
 					$endpointMethod .= "\t}";
 					$endpointMethods[$key] = $endpointMethod;
 				}
