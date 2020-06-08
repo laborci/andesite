@@ -29,6 +29,7 @@ class CodexMenu{
 		$item = ServiceContainer::get($class);
 		$decorator = $item->getDecorator();
 		$this->addItem($decorator->getTitleMenu(), $decorator->getIconMenu(), 'SHOW-FORM', ['name' => $decorator->getUrl()], $decorator->getRole());
+		return $this;
 	}
 
 	public function addSubmenu($label, $icon){

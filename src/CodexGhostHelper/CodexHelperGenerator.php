@@ -26,7 +26,7 @@ class CodexHelperGenerator{
 
 		foreach ($ghosts as  $ghost) if(class_exists($ghost['class'])){
 
-			$class = $namespace . '\\' . $ghost['name'] . 'Helper';
+			$class = $namespace . '\\Cxh_' . $ghost['name'];
 			$ghostClass = $ghost['class'];
 			/** @var Model $model */
 			$model = $ghostClass::$model;
@@ -63,7 +63,7 @@ class CodexHelperGenerator{
 			$template = str_replace('{{fieldConstructors}}', join("\n", $fieldConstructorCollection), $template);
 			$template = str_replace('{{annotations}}', join("\n", $annotationCollection), $template);
 
-			$filename = CodeFinder::Service()->Psr4ResolveClass($namespace . '\\' . $ghost['name'] . 'Helper');
+			$filename = CodeFinder::Service()->Psr4ResolveClass($namespace . '\\Cxh_' . $ghost['name']);
 			file_put_contents($filename, $template);
 
 			$style->writeln(realpath($filename).' done.');

@@ -17,6 +17,9 @@ class Comparison{
 	const OPERATOR_IN = 'in';
 	const OPERATOR_IN_STRING = 'instring';
 	const OPERATOR_LIKE = 'like';
+	const OPERATOR_REV_LIKE = 'revlike';
+	const OPERATOR_GLOB = 'glob';
+	const OPERATOR_REV_GLOB = 'revglob';
 	const OPERATOR_STARTS = 'starts';
 	const OPERATOR_ENDS = 'ends';
 	const OPERATOR_BETWEEN = 'between';
@@ -37,55 +40,65 @@ class Comparison{
 
 	public function getSql(PDOConnection $connection){
 		$sql = '';
+		$field = $connection->escapeSQLEntity($this->field);
 
 		switch ($this->operator){
 			case self::OPERATOR_IS:
-				$sql = " = {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} = {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_GT:
-				$sql = " > {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} > {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_GTE:
-				$sql = " >= {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} >= {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_LT:
-				$sql = " < {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} < {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_LTE:
-				$sql = " <= {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} <= {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_IS_NULL:
-				$sql = ' IS NULL';
+				$sql = "${field} IS NULL";
 				break;
 			case self::OPERATOR_IS_NOT_NULL:
-				$sql = ' IS NOT NULL';
+				$sql = "${field} IS NOT NULL";
 				break;
 			case self::OPERATOR_NOT_EQUAL:
-				$sql = " != {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} != {$this->quoteValue($this->value, $connection)}";
 				break;
 			case self::OPERATOR_IN:
-				$sql = empty($this->value) ? "" : " IN (" . join(',', $this->quoteArray($this->value, $connection)) . ")";
+				$sql = (empty($this->value) ? "" : "${field} IN (" . join(',', $this->quoteArray($this->value, $connection)) . ")");
 				break;
 			case self::OPERATOR_LIKE:
-				$sql = " LIKE {$this->quoteValue($this->value, $connection)}";
+				$sql = "${field} LIKE {$this->quoteValue($this->value, $connection)}";
+				break;
+			case self::OPERATOR_GLOB:
+				$sql = "${field} LIKE {$this->quoteValue(strtr($this->value, ['*'=>'%', '?'=>'_']), $connection)}";
+				break;
+			case self::OPERATOR_REV_GLOB:
+				$sql = "{$this->quoteValue($this->value, $connection)} LIKE REPLACE(REPLACE(${field}, '*', '%'),'?','_')";
+				break;
+			case self::OPERATOR_REV_LIKE:
+				$sql = "{$this->quoteValue($this->value, $connection)} LIKE ${field}";
 				break;
 			case self::OPERATOR_IN_STRING:
-				$sql = " LIKE '%{$this->quoteValue($this->value, $connection, false)}%'";
+				$sql = "${field} LIKE '%{$this->quoteValue($this->value, $connection, false)}%'";
 				break;
 			case self::OPERATOR_STARTS:
-				$sql = " LIKE '%{$this->quoteValue($this->value, $connection, false)}''";
+				$sql = "${field} LIKE '%{$this->quoteValue($this->value, $connection, false)}''";
 				break;
 			case self::OPERATOR_ENDS:
-				$sql = " LIKE '{$this->quoteValue($this->value, $connection, false)}%'";
+				$sql = "${field} LIKE '{$this->quoteValue($this->value, $connection, false)}%'";
 				break;
 			case self::OPERATOR_REGEX:
-				$sql = " REGEXP '{$this->value}'";
+				$sql = "${field} REGEXP '{$this->value}'";
 				break;
 			case self::OPERATOR_BETWEEN:
-				$sql = " BETWEEN {$this->quoteValue($this->value[0], $connection)} AND {$this->quoteValue($this->value[1], $connection)}";
+				$sql = "${field} BETWEEN {$this->quoteValue($this->value[0], $connection)} AND {$this->quoteValue($this->value[1], $connection)}";
 				break;
 		}
-		$sql = $sql ? $connection->escapeSQLEntity($this->field) . $sql : "";
+		$sql = $sql ? $sql : "";
 		return $sql;
 	}
 
@@ -127,8 +140,25 @@ class Comparison{
 		return $this;
 	}
 
+	public function revLike($value){
+		$this->operator = self::OPERATOR_REV_LIKE;
+		$this->value = $value;
+		return $this;
+	}
+
 	public function like($value){
 		$this->operator = self::OPERATOR_LIKE;
+		$this->value = $value;
+		return $this;
+	}
+	public function revGlob($value){
+		$this->operator = self::OPERATOR_REV_GLOB;
+		$this->value = $value;
+		return $this;
+	}
+
+	public function glob($value){
+		$this->operator = self::OPERATOR_GLOB;
 		$this->value = $value;
 		return $this;
 	}
