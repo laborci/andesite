@@ -92,6 +92,7 @@ abstract class CodexMission extends WebMission{
 		$router->post('/{form}/attachment/move/{id}', Action\CodexAttachmentMove::class)();
 		$router->post('/{form}/attachment/copy/{id}', Action\CodexAttachmentCopy::class)();
 		$router->post('/{form}/attachment/delete/{id}', Action\CodexAttachmentDelete::class)();
+		$router->post('/{form}/attachment/crop/{id}', Action\CodexAttachmentCrop::class)();
 
 		// PAGES
 		$router->clearPipeline();

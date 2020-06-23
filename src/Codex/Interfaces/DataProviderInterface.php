@@ -16,4 +16,5 @@ interface DataProviderInterface extends ItemDataImporterInterface, ItemConverter
 	public function copyAttachment($id, $file, $source, $target);
 	public function moveAttachment($id, $file, $source, $target);
 	public function deleteAttachment($id, $file, $category);
+	public function cropAttachment($id, $file, $category, $data);
 }

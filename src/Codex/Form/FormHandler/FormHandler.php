@@ -43,9 +43,13 @@ class FormHandler implements JsonSerializable{
 	}
 
 	public function addJSPlugin(...$plugins){ foreach ($plugins as $plugin) $this->JSplugins[] = $plugin; }
+
 	public function setLabelField(Field $field){ $this->labelField = $field->name; }
+
 	public function setItemConverter(ItemConverterInterface $itemConverter){ $this->itemConverter = $itemConverter; }
+
 	public function setItemDataImporter(ItemDataImporterInterface $itemDataImporter){ $this->itemDataImporter = $itemDataImporter; }
+
 	public function setOnSave(callable $function){ $this->onSave = $function; }
 
 	public function section($label){
@@ -89,19 +93,26 @@ class FormHandler implements JsonSerializable{
 		}else{
 			$newid = $this->dataProvider->createItem($data, $this->itemDataImporter);
 		}
-		if(!is_null($this->onSave)){
-			($this->onSave)($newid, $data);
+		if (!is_null($this->onSave)){
+			( $this->onSave )($newid, $data);
 		}
 
 		return $newid;
 	}
 
 	public function delete($id){ return $this->dataProvider->deleteItem($id); }
+
 	public function getNew(){ return $this->get(); }
 
 	public function uploadAttachment($id, $category, $file){ return $this->dataProvider->uploadAttachment($id, $category, $file); }
+
 	public function getAttachments($id){ return $this->dataProvider->getAttachments($id); }
+
 	public function copyAttachment($id, $file, $source, $target){ return $this->dataProvider->copyAttachment($id, $file, $source, $target); }
+
 	public function moveAttachment($id, $file, $source, $target){ return $this->dataProvider->moveAttachment($id, $file, $source, $target); }
+
 	public function deleteAttachment($id, $file, $category){ return $this->dataProvider->deleteAttachment($id, $file, $category); }
+
+	public function cropAttachment($id, $file, $category, $data){ return $this->dataProvider->cropAttachment($id, $file, $category, $data); }
 }

@@ -58,19 +58,6 @@ class ApiManager extends Segment{
 				throw new Exception('', 404);
 			}
 
-//			if ($methodCandidate && $reflection->hasMethod($methodCandidate)){
-//				$method = $reflection->getMethod($methodCandidate);
-//				if ($reader->getAnnotations($method)->get('accepts') !== $httpMethod) throw new Exception('', 405);
-//				array_shift($params);
-//			}else{
-//				$methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
-//				foreach ($methods as $method){
-//					$method = $httpMethod === $reader->getAnnotations($method)->get('on') ? $method : null;
-//					if (!is_null($method)) break;
-//				}
-//			}
-
-//			if (is_null($method)) throw new Exception('', 404);
 			if (count($params) < $method->getNumberOfRequiredParameters()) throw new Exception('', 400);
 
 			$this->prepend([$class, $method->getName()], $params);

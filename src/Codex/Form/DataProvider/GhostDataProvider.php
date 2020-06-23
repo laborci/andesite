@@ -1,6 +1,9 @@
 <?php namespace Andesite\Codex\Form\DataProvider;
 
+use Andesite\Core\Env\Env;
 use Andesite\DBAccess\Connection\Filter\Filter;
+use Exception;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Andesite\Codex\Interfaces\DataProviderInterface;
 use Andesite\Codex\Interfaces\ItemDataImporterInterface;
@@ -116,6 +119,43 @@ class GhostDataProvider implements DataProviderInterface{
 			}
 		}
 		return $collection;
+	}
+
+	public function cropAttachment($id, $file, $category, $data){
+		$item = $this->getItem($id);
+		$file = $item->getAttachmentCategoryManager($category)->get($file)->getRealPath();
+		$imgInfo = getimagesize($file);
+		$oType = $imgInfo['2'];
+		switch ($oType){
+			case 1:
+				$img = imagecreatefromgif($file);
+				break;
+			case 2:
+				$img = imagecreatefromjpeg($file);
+				break;
+			case 3:
+				$img = imagecreatefrompng($file);
+				break;
+			default:
+				throw new Exception('unsupported file');
+		}
+		
+		$width = $data['width'];
+		$height = $data['height'];
+		$x = $data['x'];
+		$y = $data['y'];
+		
+		$newImg = imageCreateTrueColor($width, $height);
+		imagefill($newImg, 0, 0, imagecolorallocatealpha($newImg, 0, 0, 0, 127));
+
+		imagecopyresampled($newImg, $img, 0, 0, $x, $y, $width, $height, $width, $height);
+		imagedestroy($img);
+
+		$output = Env::Service()->get('path.tmp').'/'.uniqid().'.png';
+		ImagePng($newImg, $output);
+		$item->getAttachmentCategoryManager($category)->addFile(new File($output));
+		unlink($output);
+
 	}
 
 	public function copyAttachment($id, $file, $source, $target){
