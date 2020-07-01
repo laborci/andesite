@@ -10,12 +10,23 @@ use Symfony\Component\HttpFoundation\Request;
 
 class RemoteLogSenderSocket extends AbstractRemoteLogSender{
 
+	private $connection;
+
+	public function __construct($address, $requestId, $method, $host, $path){
+		parent::__construct($address, $requestId, $method, $host, $path);
+		$this->connection = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
+	}
+
+	public function hasResource(){
+		return is_resource($this->connection);
+	}
+
 	protected function send($address, $message){
-		$socket = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
+		$this->connection = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
 		$message = json_encode($message);
 		$pieces = str_split($message, 1024);
-		foreach ($pieces as $piece) fwrite($socket, $piece);
-		fclose($socket);
+		foreach ($pieces as $piece) fwrite($this->connection, $piece);
+		fclose($this->connection);
 	}
 
 }
