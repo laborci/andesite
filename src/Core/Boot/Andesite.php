@@ -71,7 +71,10 @@ class Andesite{
 		if ($context === 'WEB') session_start();
 
 		/* Register base services */
-		ServiceContainer::shared(Reader::class, function () use ($annotationReaderCache){ return new Reader(new Parser(), new FileCache($annotationReaderCache)); });
+		ServiceContainer::shared(Reader::class, function () use ($annotationReaderCache){
+			if(!is_dir($annotationReaderCache)) mkdir($annotationReaderCache, 0777, true);
+			return new Reader(new Parser(), new FileCache($annotationReaderCache));
+		});
 
 		/* Setup modules */
 		ModuleManager::setAliases($moduleAliases);
