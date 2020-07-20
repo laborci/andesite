@@ -18,6 +18,7 @@ class Router{
 
 	function __construct(Request $request){ $this->request = $request; }
 
+	public function do($responderClass = null, $arguments = []){$this->any('/*', $responderClass, $arguments)();}
 	public function get($pattern, $responderClass = null, $arguments = []): Pipeline{ return $this->route(Request::METHOD_GET, $pattern, $responderClass, $arguments); }
 	public function post($pattern, $responderClass = null, $arguments = []): Pipeline{ return $this->route(Request::METHOD_POST, $pattern, $responderClass, $arguments); }
 	public function delete($pattern, $responderClass = null, $arguments = []): Pipeline{ return $this->route(Request::METHOD_DELETE, $pattern, $responderClass, $arguments); }
@@ -27,6 +28,7 @@ class Router{
 	public function api($path, $namespace){ return $this->route('*', rtrim($path, '/') . '/{path}', ApiManager::class, ['namespace' => $namespace]); }
 	public function clearPipeline(){ $this->pipeline = []; }
 	public function pipe($responderClass, $arguments = []){ $this->pipeline[] = ['responderClass' => $responderClass, 'arguments' => $arguments,]; }
+	
 
 	protected function route($method, $patterns, $responderClass = null, $arguments = []): Pipeline{
 		if ($method === '*' || $this->request->isMethod($method)){

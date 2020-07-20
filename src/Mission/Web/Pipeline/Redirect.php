@@ -8,7 +8,7 @@ class Redirect extends Segment {
 	protected $status;
 
 	static function setup($url = '/', $status = 302){
-		return [static::class, compact('url','status')];
+		return compact('url','status');
 	}
 
 	final public function __invoke($method = null) {
