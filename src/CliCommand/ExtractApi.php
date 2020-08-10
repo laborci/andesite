@@ -16,7 +16,7 @@ class ExtractApi extends CliModule{
 
 	protected function createCommand($config): Command{
 
-		return new class( $config, 'generate:api-js', 'api', 'Extract web api-s to js') extends CliCommand{
+		return new class( $config, 'api:generate', 'api', 'Extract web api-s to js') extends CliCommand{
 
 			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 				$apis = $config;

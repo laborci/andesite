@@ -13,7 +13,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ShowEnv extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config, 'show:env', 'env', 'Generates and shows the current env' ) extends CliCommand{
+		return new class( $config, 'env', null, 'Generates and shows the current env' ) extends CliCommand{
 
 			protected function configure(){
 				$this->addArgument('key', InputArgument::OPTIONAL);

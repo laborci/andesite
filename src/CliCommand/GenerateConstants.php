@@ -12,7 +12,7 @@ use Andesite\Util\CodeFinder\CodeFinder;
 class GenerateConstants extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config, 'generate:constants', 'const', "Generates constants" ) extends CliCommand{
+		return new class( $config, 'constants', 'const', "Generates constants" ) extends CliCommand{
 
 			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 				$classes = array_key_exists('classes', $this->config) && is_array($this->config['classes']) ? $this->config['classes'] : [];

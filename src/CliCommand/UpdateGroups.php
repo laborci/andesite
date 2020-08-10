@@ -11,7 +11,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class UpdateGroups extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class($config, 'update:groups', null, 'Updates user groups') extends CliCommand{
+		return new class($config, 'groups', null, 'Updates user groups') extends CliCommand{
 			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 				$roleManager = RoleManager::Module();
 				/** @var \Andesite\Ghost\Model $model */

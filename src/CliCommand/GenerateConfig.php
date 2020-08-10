@@ -14,7 +14,7 @@ use Twig\Loader\FilesystemLoader;
 class GenerateConfig extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config, 'generate:config', 'vhost', 'Generates virtualhost and other configs' ) extends CliCommand{
+		return new class( $config, 'config', 'vhost', 'Generates virtualhost and other configs' ) extends CliCommand{
 
 			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
 

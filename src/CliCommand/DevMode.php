@@ -12,7 +12,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class DevMode extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config, 'set:devmode', 'devmode', "sets devmode" ) extends CliCommand{
+		return new class( $config, 'devmode', null, "sets devmode" ) extends CliCommand{
 
 			protected function configure(){
 			}

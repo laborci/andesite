@@ -12,7 +12,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class GenerateCodexHelper extends CliModule{
 
 	protected function createCommand($config): Command{
-		return new class( $config, 'generate:codex-helper', 'codex', "Generates codex ghost helpers" ) extends CliCommand{
+		return new class( $config, 'ghost:codex', 'codex', "Generates codex ghost helpers" ) extends CliCommand{
 
 			protected function configure(){
 				$this->addArgument('name', InputArgument::OPTIONAL);
