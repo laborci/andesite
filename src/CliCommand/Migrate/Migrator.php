@@ -4,7 +4,6 @@ use Andesite\Core\Env\Env;
 use Andesite\DBAccess\Connection\Filter\Filter;
 use Andesite\DBAccess\Connection\PDOConnection;
 use Andesite\DBAccess\ConnectionFactory;
-use Application\Module\CliCommand\Diff;
 use Rah\Danpu\Export;
 use Symfony\Component\Console\Style\SymfonyStyle;
 class Migrator{
