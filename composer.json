@@ -19,7 +19,10 @@
         "riimu/kit-phpencoder": "^2.3",
         "laborci/valentine-date": "^1.0",
         "redant/console": "^1.0",
-        "rah/danpu": "^2.7"
+        "rah/danpu": "^2.7",
+        "symfony/validator": "^5.1",
+        "lcobucci/jwt": "^4.0@alpha",
+        "camcima/php-mysql-diff": "^1.2"
     },
     "autoload": {
         "psr-4": {
