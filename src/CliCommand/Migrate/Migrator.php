@@ -18,8 +18,8 @@ class Migrator{
 		$this->style = $style;
 		$this->connectionName = $connectionName;
 		$this->connection = ConnectionFactory::Module()->get($this->connectionName);
-		$this->location = realpath($location .'/'. $this->connectionName) . '/';
-		if (!is_dir($this->location)) mkdir($this->location);
+		$this->location = $location .'/'. $this->connectionName . '/';
+		if (!is_dir($this->location)) mkdir($this->location, 0777, true);
 		chdir($this->location);
 	}
 
