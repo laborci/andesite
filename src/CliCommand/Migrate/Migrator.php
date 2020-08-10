@@ -139,7 +139,7 @@ class Migrator{
 
 	public function statusCheck(){
 		$this->style->writeln('<bg=cyan;fg=black> Status check </>');
-		$current = $this->getCurrentVersion();
+		$current = intval($this->getCurrentVersion());
 		$latest = $this->getLatestMigrationVersion();
 		if ($latest !== $current){
 			$this->style->writeln('<fg=red>Your database (' . $current . ') is not on the latest migration (' . $latest . ') version !</>');
