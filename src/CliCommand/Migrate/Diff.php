@@ -1,8 +1,6 @@
 <?php namespace Andesite\CliCommand\Migrate;
 
 use Andesite\DBAccess\Connection\PDOConnection;
-use Application\Module\CliCommand\TableDiff;
-use Application\Module\CliCommand\ViewDiff;
 use Camcima\MySqlDiff\Parser;
 
 class Diff{
