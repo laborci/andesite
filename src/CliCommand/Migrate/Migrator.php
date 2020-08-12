@@ -10,15 +10,17 @@ class Migrator{
 
 	protected SymfonyStyle $style;
 	public $location;
+	protected $dumpPath;
 	protected PDOConnection $connection;
 	protected $connectionName;
 
-	public function __construct($connectionName, $location, SymfonyStyle $style){
+	public function __construct($connectionName, $config, SymfonyStyle $style){
 		echo $connectionName;
 		$this->style = $style;
 		$this->connectionName = $connectionName;
+		$this->dumpPath = $config['dump']['path'];
 		$this->connection = ConnectionFactory::Module()->get($this->connectionName);
-		$this->location = $location .'/'. $this->connectionName . '/';
+		$this->location = $config['location'] .'/'. $this->connectionName . '/';
 		if (!is_dir($this->location)) mkdir($this->location, 0777, true);
 		chdir($this->location);
 	}
@@ -183,7 +185,7 @@ class Migrator{
 	}
 
 	protected function getDump(){
-		$dumper = ConnectionFactory::Module()->getDumper($this->connectionName);
+		$dumper = ConnectionFactory::Module()->getDumper($this->connectionName, $this->dumpPath);
 		$tmp = Env::Service()->get('path.tmp') . 'dump.sql';
 		$dumper->getDumper()->structure(true)->disableForeignKeyChecks(true)->data(false)->file($tmp);
 		new Export($dumper->getDumper());

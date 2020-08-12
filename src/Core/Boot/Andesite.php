@@ -57,13 +57,13 @@ class Andesite{
 		$env->set('sys.context', getenv('context'));
 
 		$annotationReaderCache = $env->get('path.annotation-reader-cache');
-		$moduleAliases = $env->get('sys.module.aliases');
-		$moduleConfigs = $env->get('sys.module.configs', []);
-		$modules = $env->get('sys.modules', []);
+//		$moduleAliases = $env->get('sys.module.aliases');
+		$moduleConfigs = $env->get('modules', []);
 		$timezone = $env->get('sys.timezone');
 		$context = $env->get('sys.context');
-		$missions = $env->get('sys.missions', []);
-		$startup = $env->get('sys.startup');
+		$missions = $env->get('missions', []);
+		$startup = $env->get('sys.modules.boot', []);
+		$modules = $env->get('sys.modules.load', []);
 
 		/* Setup running environment */
 		date_default_timezone_set($timezone);
@@ -77,7 +77,7 @@ class Andesite{
 		});
 
 		/* Setup modules */
-		ModuleManager::setAliases($moduleAliases);
+//		ModuleManager::setAliases($moduleAliases);
 		ModuleManager::setConfigs($moduleConfigs);
 
 		/* Run Startup */

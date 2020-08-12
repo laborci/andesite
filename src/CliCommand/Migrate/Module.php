@@ -19,7 +19,7 @@ class Module extends CommandModule{
 	public function status(): Cmd{
 		return ( new class extends Cmd{
 			public function __invoke(){
-				$migrator = new Migrator($this->input->getArgument('database'), $this->config['location'], $this->style);
+				$migrator = new Migrator($this->input->getArgument('database'), $this->config, $this->style);
 				$this->style->writeln('Database: <fg=black>'.$this->input->getArgument('database').'</>');
 				$this->style->writeln('Migrations: <fg=black>'.$migrator->location.'</>');
 				$migrator->integrityCheck();
@@ -36,7 +36,7 @@ class Module extends CommandModule{
 	public function refresh(): Cmd{
 		return ( new class extends Cmd{
 			public function __invoke(){
-				$migrator = new Migrator($this->input->getArgument('database'), $this->config['location'], $this->style);
+				$migrator = new Migrator($this->input->getArgument('database'), $this->config, $this->style);
 				$version = $this->input->getArgument('version');
 				$migrator->refresh($version);
 			}
@@ -51,7 +51,7 @@ class Module extends CommandModule{
 	public function init(): Cmd{
 		return ( new class extends Cmd{
 			public function __invoke(){
-				$migrator = new Migrator($this->input->getArgument('database'), $this->config['location'], $this->style);
+				$migrator = new Migrator($this->input->getArgument('database'), $this->config, $this->style);
 				$migrator->init();
 			}
 		})
@@ -64,7 +64,7 @@ class Module extends CommandModule{
 	public function go(): Cmd{
 		return ( new class extends Cmd{
 			public function __invoke(){
-				$migrator = new Migrator($this->input->getArgument('database'), $this->config['location'], $this->style);
+				$migrator = new Migrator($this->input->getArgument('database'), $this->config, $this->style);
 				$migrator->migrate($this->input->getArgument('version'), $this->input->getOption('force'));
 			}
 		})
@@ -79,7 +79,7 @@ class Module extends CommandModule{
 	public function generate(): Cmd{
 		return ( new class extends Cmd{
 			public function __invoke(){
-				$migrator = new Migrator($this->input->getArgument('database'), $this->config['location'], $this->style);
+				$migrator = new Migrator($this->input->getArgument('database'), $this->config, $this->style);
 				$migrator->generate($this->input->getOption('force'));
 			}
 		})
@@ -98,7 +98,7 @@ class Module extends CommandModule{
 				$style = $this->style;
 				$input = $this->input;
 
-				$dumper = ConnectionFactory::Module()->getDumper($input->getArgument('database'));
+				$dumper = ConnectionFactory::Module()->getDumper($input->getArgument('database'), $this->config['dump']['path']);
 
 				if ($input->getOption('structure') === false && $input->getOption('data') === false){
 					$file = 'snapshot.' . $input->getArgument('database') . '.' . date('Y-m-d.H-i-s') . '.sql';

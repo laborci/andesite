@@ -21,12 +21,13 @@ class ModuleManager implements SharedService{
 		return null;
 	}
 
-	public static function setAliases($aliases){ static::Service()->aliases = is_array($aliases) ? $aliases : []; }
+//	public static function setAliases($aliases){ static::Service()->aliases = is_array($aliases) ? $aliases : []; }
 	public static function setConfigs($configs){
 		$manager = static::Service();
 		if (is_array($configs)){
 			foreach ($configs as $alias => $config){
-				$manager->configs[$manager->resolveAlias($alias)] = $config;
+				static::Service()->aliases[$alias] = $config['module'];
+				$manager->configs[$config['module']] = array_key_exists('config', $config) ? $config['config'] : [];
 			}
 		}
 	}

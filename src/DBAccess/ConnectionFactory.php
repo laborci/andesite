@@ -1,5 +1,6 @@
 <?php namespace Andesite\DBAccess;
 
+use Andesite\Core\Env\Env;
 use Andesite\Core\Module\Module;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\Dumper;
@@ -14,9 +15,9 @@ class ConnectionFactory extends Module{
 
 	protected function setup($config){$this->config = $config;}
 
-	public function getDumper($name){
+	public function getDumper($name, $path){
 		$connection = $this->get($name);
-		return new Dumper($connection, $this->config['dump']['path'], $this->config['dump']['tmp']);
+		return new Dumper($connection, $path, Env::Service()->get('path.tmp'));
 	}
 
 	public function get($name): ?PDOConnection{

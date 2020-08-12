@@ -1,5 +1,6 @@
 <?php namespace Andesite\GhostGenerator;
 
+use Andesite\CodexGhostHelper\CodexHelperGenerator;
 use Andesite\Core\ServiceManager\Service;
 use Andesite\DBAccess\ConnectionFactory;
 use Andesite\Ghost\Field;
@@ -27,7 +28,8 @@ class GhostGenerator{
 	/** @var SymfonyStyle */
 	protected $style;
 
-	public function __invoke(SymfonyStyle $style = null){
+	public function __invoke(SymfonyStyle $style = null, $config){
+		$this->config = $config;
 		$this->ghosts = GhostManager::Module()->getGhosts();
 		$this->style = is_null($style) ? new SymfonyStyle(new ArgvInput(), new DummyOutput()) : $style;
 		$this->ghostNamespace = GhostManager::Module()->getNamespace();
@@ -41,9 +43,9 @@ class GhostGenerator{
 			$exists = $this->generateEntity($name, $table);
 			$this->generateGhostFromDatabase($name, $table, $database);
 			if ($exists) $this->updateGhost($name);
-
 		}
 		$this->style->success('done.');
+		CodexHelperGenerator::Service()->execute($this->style, $config['codexhelper']);
 	}
 
 	protected function updateGhost($name){
