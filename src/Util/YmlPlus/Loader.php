@@ -114,7 +114,12 @@ class Loader{
 			$optional = false;
 		}
 
-		$ini_file = $this->path . $file . '.yml';
+		if(substr($file, 0, 1) === '/'){
+			$ini_file = getenv('root').'/' . $file . '.yml';
+		}else{
+			$ini_file = $this->path . $file . '.yml';
+		}
+
 		$values = $default;
 
 		try{
