@@ -15,7 +15,6 @@ class Migrator{
 	protected $connectionName;
 
 	public function __construct($connectionName, $config, SymfonyStyle $style){
-		echo $connectionName;
 		$this->style = $style;
 		$this->connectionName = $connectionName;
 		$this->dumpPath = $config['dump']['path'];
@@ -90,7 +89,6 @@ class Migrator{
 
 	public function init(){
 		$access = $this->connection->createSmartAccess();
-		echo $this->location;
 		if (!file_exists($this->location)) mkdir($this->location, 0777, true);
 		if (!$access->tableExists('__migration')){
 			$access->addTable('__migration', "(

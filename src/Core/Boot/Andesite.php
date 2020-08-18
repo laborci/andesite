@@ -49,7 +49,7 @@ class Andesite{
 
 		/** @var Env $env */
 		$env = ServiceContainer::get(Env::class);
-		if($this->devmode) $env->reload();
+		if($this->devmode) $env->reload(getenv('context') === 'CLI');
 
 
 		/* Setup env */
