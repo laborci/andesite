@@ -1,5 +1,6 @@
 <?php namespace Andesite\Mission\Web\Middleware;
 
+use Andesite\Core\Env\Env;
 use Andesite\Util\Cache\FileCache;
 use Andesite\Mission\Web\Pipeline\Middleware;
 use Symfony\Component\HttpFoundation\Request;
@@ -7,8 +8,8 @@ use Symfony\Component\HttpFoundation\Request;
 class Cache extends Middleware {
 
 	private $outputCachePath;
-	public function __construct($outputCachePath){
-		$this->outputCachePath = $outputCachePath;
+	public function __construct(){
+		$this->outputCachePath = Env::Service()->get('path.cache-middleware');
 	}
 
 	public function run(){
@@ -17,9 +18,11 @@ class Cache extends Middleware {
 			$cache = new FileCache($this->outputCachePath);
 			$cacheKey = crc32($this->getRequest()->getRequestUri());
 			if($cache->isValid($cacheKey)){
+				dump('cached');
 				$this->setResponse(unserialize($cache->get($cacheKey)));
 				$this->getResponse()->headers->set('x-cached-until', $cache->getAge($cacheKey)*-1);
 			}else {
+				dump('gen');
 				$this->next();
 				if($this->getRequest()->attributes->getBoolean('cache', false)){
 					$cacheInterval = $this->getRequest()->attributes->getInt('cache-interval', 60);
