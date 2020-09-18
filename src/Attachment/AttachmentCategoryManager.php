@@ -117,6 +117,7 @@ class AttachmentCategoryManager{
 		$statement->bindValue(':category', $record['category']);
 		$statement->bindValue(':ordinal', $record['ordinal'], SQLITE3_INTEGER);
 		$statement->execute();
+		$this->attachmentStorage->getMetaDBConnection()->exec('PRAGMA schema.wal_checkpoint;');
 		$this->attachments = null;
 	}
 
@@ -140,6 +141,7 @@ class AttachmentCategoryManager{
 		$statement->bindValue(':category', $this->category->getName());
 		$statement->bindValue(':file', $attachment->getFilename());
 		$statement->execute();
+		$this->attachmentStorage->getMetaDBConnection()->exec('PRAGMA schema.wal_checkpoint;');
 
 		$statement = $this->attachmentStorage->getMetaDBConnection()
 			->prepare(/** @lang SQLite */ "SELECT count(*) as `count` FROM file WHERE path = :path AND file = :file ORDER BY ordinal, file");

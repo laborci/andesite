@@ -82,6 +82,7 @@ class AttachmentStorage{
 			$connection->exec('PRAGMA journal_mode = wal;');
 			$this->metaDBConnection = $connection;
 		}
+		$connection->busyTimeout(5000);
 		return $this->metaDBConnection;
 	}
 
