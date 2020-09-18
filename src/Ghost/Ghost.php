@@ -85,11 +85,11 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 #region Data Packing
 
-	public function compose($record): Ghost{
+	public function compose($record,$ignore=false): Ghost{
 		foreach (static::model()->fields as $fieldName => $field){
 			if (array_key_exists($fieldName, $record)){
 				$this->$fieldName = $field->compose($record[$fieldName]);
-			}else{
+			}elseif(!$ignore){
 				throw new InsufficientData(static::model()->table . ' ' . $fieldName);
 			}
 		}

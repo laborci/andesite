@@ -23,6 +23,10 @@ class Repository{
 	}
 	private function addToCache(Ghost $object):Ghost{ $this->cache->add($object, $object->id); return $object; }
 
+	public function clearCache(){
+		$this->cache->clear();
+	}
+
 	public function pick($id): ?Ghost{
 		if ($id === null) return null;
 

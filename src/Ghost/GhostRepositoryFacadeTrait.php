@@ -8,6 +8,10 @@ use Andesite\DBAccess\Connection\Finder;
  */
 trait GhostRepositoryFacadeTrait{
 
+	static final public function clearCache(){
+		return static::$model->repository->clearCache();
+	}
+
 	/** @return self */
 	static final public function pick($id): ?self{
 		return static::$model->repository->pick($id);

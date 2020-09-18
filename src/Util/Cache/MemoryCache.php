@@ -7,6 +7,9 @@ class MemoryCache implements MemoryCacheInterface{
 	public function add($object, $id) { $this->cache[$id] = $object; }
 	public function get($id) { return array_key_exists($id, $this->cache) ? $this->cache[$id] : null; }
 	public function delete($id) { unset($this->cache[$id]); }
-	public function clear(){$this->cache = [];}
+	public function clear(){
+		unset($this->cache);
+		$this->cache = [];
+	}
 
 }
