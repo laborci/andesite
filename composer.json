@@ -31,7 +31,6 @@
         "phpmailer/phpmailer": "^6.1",
         "erusev/parsedown": "^1.7",
         "badcow/lorem-ipsum": "^1.1",
-        "lcobucci/jwt": "^4.0@alpha",
         "clue/socket-raw": "^1.4"
     },
     "autoload": {
