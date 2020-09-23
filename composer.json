@@ -26,7 +26,6 @@
         "redant/console": "^1.0",
         "rah/danpu": "^2.7",
         "symfony/validator": "^5.1",
-        "lcobucci/jwt": "^4.0.0-alpha3",
         "camcima/php-mysql-diff": "^1.2",
         "phpmailer/phpmailer": "^6.1",
         "erusev/parsedown": "^1.7",
