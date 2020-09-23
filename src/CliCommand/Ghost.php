@@ -99,16 +99,14 @@ class Ghost extends CommandModule{
 					/** @var \Andesite\Ghost\Ghost $item */
 					$this->style->writeln('exporting: ' . $item->id . ' as ' . $filename . '.json');
 					$data = ['ghost' => $ghost, 'data' => $item->decompose(), 'attachments' => []];
-					$attachmentCategories = $item->getAttachmentCategories();
-					foreach ($attachmentCategories as $attachmentCategory){
-						$attachments = $attachmentCategory->getCategoryManager($item)->all;
-						foreach ($attachments as $attachment){
+					$collections = $item->getAttachmentCollections();
+					foreach ($collections as $collection){
+						foreach ($collection as $attachment){
 							$data['attachments'][] = [
-								'category'    => $attachmentCategory->getName(),
-								'meta'        => $attachment->meta,
-								'filename'    => $attachment->getFilename(),
-								'description' => $attachment->description,
-								'ordinal'     => $attachment->ordinal
+								'category'    => $collection->category->name,
+								'meta'        => $attachment->meta->get(),
+								'filename'    => $attachment->filename,
+								'ordinal'     => $attachment->sequence
 							];
 						}
 					}
@@ -147,7 +145,7 @@ class Ghost extends CommandModule{
 	public function import(): Cmd{
 		return ( new class extends Cmd{
 			public function __invoke(){
-				$namespace = Env::Service()->get('modules.ghosts.config.namespace');
+				$namespace = Env::Service()->get('modules.ghosts.config.namespace.ghost');
 
 				$pattern = $this->input->getArgument('files');
 				$files = glob(Env::Service()->get('path.tmp') . $pattern . '.json');
@@ -201,20 +199,19 @@ class Ghost extends CommandModule{
 								$zip->close();
 								$this->style->write("... remove existing attachments ");
 
-								foreach ($item->getAttachmentCategories() as $attachmentCategory){
-									$attachments = $attachmentCategory->getCategoryManager($item)->all;
-									foreach ($attachments as $attachment){
-										$attachment->remove();
+								foreach ($item->getAttachmentCollections() as $collection){
+									foreach ($collection as $attachment){
+										$attachment->delete();
 									}
 								}
 								$this->style->writeln("... done");
 
 
 								foreach ($import['attachments'] as $attachment){
-									$manager = $item->getAttachmentCategoryManager($attachment['category']);
+									$collection = $item->getAttachmentCollection($attachment['category']);
 									try{
 										$this->style->write("... adding file \"".$attachment['filename']."\" to \"" . $attachment['category']."\" category");
-										$manager->addFile(new File($tmp . '/' . $attachment['filename']), $attachment['description'], $attachment['ordinal'], $attachment['meta']);
+										$collection->addFile(new File($tmp . '/' . $attachment['filename']));
 										$this->style->writeln(" ... done ");
 									}catch ( \Andesite\Attachment\Exception $exception){
 										$this->style->warning($exception->getMessage());

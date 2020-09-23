@@ -19,6 +19,8 @@ trait GhostAttachmentTrait {
 			$this->attachmentCollections[$name] = static::$model->attachmentStorage->createCollection($this, $name);
 	}
 
+	/** @return Collection[] */
+	public function getAttachmentCollections():array{return $this->attachmentCollections;	}
 
 //	public function getAttachmentCategoryManager($categoryName): AttachmentCategoryManager {
 //		if (!$this->isExists()) throw new \Exception('Ghost not exists yet!');
