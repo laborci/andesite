@@ -1,0 +1,40 @@
+<?php namespace {{shadow-namespace}};
+
+use Andesite\Attachment\Collection;
+use Andesite\DBAccess\Connection\Filter\Comparison;
+use Andesite\DBAccess\Connection\Filter\Filter;
+use Andesite\Ghost\Field;
+use Andesite\Ghost\Ghost;
+use Andesite\Ghost\Model;
+
+/**
+ * @method static \{{finder-namespace}}\__{{name}} search( Filter $filter = null )
+# @virtuals
+# @protecteds
+# @collections
+# @relations
+# @comparators
+ */
+abstract class __{{name}} extends Ghost{
+
+	public static ?Model $model = null;
+	public static function __callStatic($name, $arguments){ if (in_array($name, static::$model->fields)) return new Comparison($name); }
+
+# abstracts
+
+# enum-constants
+
+# field-constants
+
+# fields
+
+	static protected function model(Model $model): Model{
+		return $model
+# field-additions
+# field-validators
+# protect-id-field
+		;
+	}
+}
+
+

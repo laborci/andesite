@@ -9,6 +9,7 @@ use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
 use Andesite\Mission\Cli\Command\Cmd;
 use Andesite\Mission\Cli\Command\CommandModule;
+use CaseHelper\CamelCaseHelper;
 use PhpParser\Node\Expr\UnaryMinus;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -33,8 +34,21 @@ class Ghost extends CommandModule{
 	 */
 	public function generate(): Cmd{
 		return ( new class extends Cmd{
-			public function __invoke(){ GhostGenerator::Service()($this->style, $this->config); }
-		} );
+			public function __invoke(){ GhostGenerator::Service()->setup($this->style)->generate($this->input->getArgument('name')); }
+		} )->addArgument('name', InputArgument::OPTIONAL);
+	}
+
+
+	/**
+	 * @alias       create
+	 * @description Generates ghosts codex helpers
+	 */
+	public function create(): Cmd{
+		return ( new class extends Cmd{
+			public function __invoke(){
+				GhostGenerator::Service()->setup($this->style)->create($this->input->getArgument('name'));
+			}
+		} )->addArgument('name', InputArgument::REQUIRED);
 	}
 
 	/**

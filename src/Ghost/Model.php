@@ -3,79 +3,68 @@
 use Andesite\Attachment\AttachmentCategory;
 use Andesite\Attachment\AttachmentRepository;
 use Andesite\Attachment\AttachmentStorage;
+use Andesite\Attachment\Category;
+use Andesite\Attachment\Storage;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\PDOConnection;
 use Andesite\DBAccess\ConnectionFactory;
+use Andesite\Util\PropertyList\PropertyListDefinition;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Validation;
 
-class Model implements Decorator{
 
-	/** @var PDOConnection */
-	public $connection;
-	public $table;
+/**
+ * @property-read ValidatorSet               $validators
+ * @property-read PDOConnection              $connection
+ * @property-read bool                       $mutable
+ * @property-read string                     $table
+ * @property-read string                     $storage
+ * @property-read string                     $ghost
+ * @property-read \Andesite\Ghost\Repository $repository
+ * @property-read Storage                    $attachmentStorage
+ * @property-read array                      $virtuals
+ * @property-read array                      $getters
+ * @property-read array                      $setters
+ * @property-read Field[]                    $fields
+ * @property-read Relation[]                 $relations
+ */
+class Model{
+
+	private PDOConnection $connection;
+	private string $table;
+	private string $ghost;
+	private string $storage;
+	private Repository $repository;
+	private ?Storage $attachmentStorage;
+	private array $virtuals = [];
+	private array $getters = [];
+	private array $setters = [];
+	private bool $mutable = true;
 	/** @var Field[] */
-	public $fields = [];
+	private array $fields = [];
 	/** @var Relation[] */
-	public $relations = [];
-	public $ghost;
-	/** @var Repository */
-	public $repository;
-	/** @var AttachmentStorage */
-	protected $attachmentStorage;
-	public $connectionName;
-	/** @var array */
-	public $virtuals = [];
-	/** @var array */
-	public $getters = [];
-	/** @var array */
-	public $setters = [];
-	/** @var bool */
-	protected $mutable = true;
-
+	private array $relations = [];
 	/** @var \Symfony\Component\Validator\Constraint[] */
-	private $validators = [];
+	private ValidatorSet $validators;
 
-	/**
-	 * @return \Symfony\Component\Validator\Constraint[]
-	 */
-	public function getValidators(): array{
-		return $this->validators;
-	}
-	
-	final public function addValidator($field, Constraint $validator){
-		if (!array_key_exists($field, $this->validators)) $this->validators[$field] = [];
-		$this->validators[$field][] = $validator;
-	}
-
-//	public function validate(Ghost $item, $onlymessage = true){
-//		$validator = Validation::createValidator();
-//		$errors = [];
-//		foreach ($this->validators as $field => $validators){
-//			$violations = $validator->validate($item->$field, $validators);
-//			for ($i = 0; $i < $violations->count(); $i++){
-//				$error = [
-//					'field'   => $field,
-//					'message' => $violations->get($i)->getMessage(),
-//				];
-//				if (!$onlymessage) $error['violation'] = $violations->get($i);
-//				$errors[] = $error;
-//			}
-//		}
-//		return $errors;
-//	}
-
-	public function __construct($ghost){
-		$table = $ghost::Table;
-		$connectionName = $ghost::ConnectionName;
-		$this->connection = ConnectionFactory::Module()->get($connectionName);
+	public function __construct(string $ghost, string $connection, string $table, string $storage, $mutable = true){
+		$this->connection = ConnectionFactory::Module()->get($connection);
 		$this->table = $table;
 		$this->ghost = $ghost;
+		$this->mutable = $mutable;
+		$this->storage = $storage;
 		$this->repository = new Repository($ghost, $this);
-		$this->connectionName = $connectionName;
-		$this->attachmentStorage = AttachmentRepository::Module()->getStorage($this->table, GhostManager::Module(false)->getAttachment());
+		$this->attachmentStorage = GhostManager::Module()->getAttachmentRepository()->createStorage($storage);
+		$this->validators = new ValidatorSet();
+	}
+
+	public function __get($key){ if (property_exists($this, $key)) return $this->$key; }
+
+	final public function addValidator(string $field, Constraint $constraint): Model{
+		$this->validators->addValidator($field, $constraint);
+		return $this;
 	}
 
 	/**
@@ -83,12 +72,14 @@ class Model implements Decorator{
 	 * @param null|bool|string $getter false: no getter; null: passThrough; true: get'Field'() method; string: your method name
 	 * @param bool|string      $setter false: no setter; true: set'Field'() method; string: your method name
 	 */
-	public function protectField($field, $getter = null, $setter = false){
+	public function protectField($field, $getter = null, $setter = false): Model{
+		if (!array_key_exists($field, $this->fields)) return $this;
 		if ($getter === true) $getter = 'get' . ucfirst($field);
 		if ($setter === true || $setter === null) $setter = 'set' . ucfirst($field);
 		if ($getter !== false) $this->getters[$field] = ['type' => 'virtual', 'method' => $getter];
 		if ($setter !== false) $this->setters[$field] = ['method' => $setter];
 		$this->fields[$field]->protect($getter, $setter);
+		return $this;
 	}
 
 	/**
@@ -96,41 +87,37 @@ class Model implements Decorator{
 	 * @param bool|string $getter false: no getter; true: get'Field'() method; string: your method name
 	 * @param bool|string $setter false: no setter; true: set'Field'() method; string: your method name
 	 */
-	public function virtual($field, $getter = true, $setter = false, $type = ''){
+	public function virtual($field, $getter = true, $setter = false, $type = ''): Model{
 		if ($getter === true) $getter = 'get' . ucfirst($field);
 		if ($setter === true || $setter === null) $setter = 'set' . ucfirst($field);
 		if ($getter !== false) $this->getters[$field] = ['type' => 'virtual', 'method' => $getter];
 		if ($setter !== false) $this->setters[$field] = ['method' => $setter];
 		$this->virtuals[$field] = ['setter' => $setter, 'getter' => $getter, 'name' => $field, 'type' => $type];
+		return $this;
 	}
 
-	public function immutable(){ $this->mutable = false; }
-
-	public function isMutable(){ return $this->mutable; }
-
-	public function createGhost(): Ghost{ return new $this->ghost; }
-
-	public function hasMany($target, $ghost, $field): Relation{
+	public function hasMany(string $target, string $ghost, string $field): Model{
 		$this->getters[$target] = ['type' => 'relation'];
-		return $this->relations[$target] = new Relation($target, Relation::TYPE_HASMANY, ['ghost' => $ghost, 'field' => $field]);
+		$this->relations[$target] = new Relation($target, Relation::TYPE_HASMANY, ['ghost' => $ghost, 'field' => $field]);
+		return $this;
 	}
 
-	public function belongsTo($target, $ghost, $field = null): Relation{
+	public function belongsTo(string $target, string $ghost, ?string $field = null): Model{
 		if ($field === null) $field = $target . 'Id';
 		$this->getters[$target] = ['type' => 'relation'];
-		return $this->relations[$target] = new Relation($target, Relation::TYPE_BELONGSTO, ['ghost' => $ghost, 'field' => $field]);
+		$this->relations[$target] = new Relation($target, Relation::TYPE_BELONGSTO, ['ghost' => $ghost, 'field' => $field]);
+		return $this;
 	}
 
-	public function addField($name, $type, $data = null): Field{
-		return $this->fields[$name] = new Field($name, $type, $data);
+	public function addField(string $name, string $type, $data = null): Model{
+		$this->fields[$name] = new Field($name, $type, $data);
+		return $this;
 	}
 
-	public function hasAttachment($name): AttachmentCategory{
+	public function addAttachmentCategory(string $name, int $filesizelimit = 0, int $filelimit = 0, ?array $extensions = null, ?PropertyListDefinition $propertyList = null): Model{
 		$this->getters[$name] = ['type' => 'attachment'];
-		return $this->getAttachmentStorage()->addCategory($name);
+		$this->attachmentStorage->addCategory(new Category($name, $extensions, $filesizelimit, $filelimit, $propertyList));
+		return $this;
 	}
 
-	public function getAttachmentStorage(){
-		return $this->attachmentStorage;
-	}
 }

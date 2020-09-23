@@ -2,7 +2,8 @@
 
 use Andesite\DBAccess\Connection\Filter\Filter;
 
-class Repository {
+
+class Repository{
 
 	/** @var string */
 	protected $table;
@@ -10,47 +11,48 @@ class Repository {
 	/** @var PDOConnection */
 	protected $connection;
 
-	public function __construct($connection, $table) {
+	public function __construct($connection, $table){
 		$this->table = $table;
 		$this->connection = $connection;
 		$this->escTable = $this->escapeSQLEntity($table);
 	}
 
-	public function search(Filter $filter = null): Finder { return $this->connection->createFinder()->select($this->escTable . '.*')->from($this->escTable)->where($filter); }
-	public function pick(int $id) { return $this->search(Filter::where('id = $1', $id))->pick(); }
-	public function collect(array $ids) { return $this->search(Filter::where('id IN ($1)', $ids))->collect(); }
-	public function count(Filter $filter = null) { return $this->connection->createFinder()->from($this->escTable)->where($filter)->count(); }
-	public function save($record) { return $record['id'] ? $this->update($record) : $this->insert($record); }
+	public function search(Filter $filter = null): Finder{ return $this->connection->createFinder()->select($this->escTable . '.*')->from($this->escTable)->where($filter); }
+	public function pick(int $id){ return $this->search(Filter::where('id = $1', $id))->pick(); }
+	public function collect(array $ids){ return $this->search(Filter::where('id IN ($1)', $ids))->collect(); }
+	public function count(Filter $filter = null){ return $this->connection->createFinder()->from($this->escTable)->where($filter)->count(); }
+	public function save($record){ return $record['id'] ? $this->update($record) : $this->insert($record); }
 
-	public function getTable(): string { return $this->table; }
+	public function getTable(): string{ return $this->table; }
+	public function getConnection(): \Andesite\DBAccess\Connection\PDOConnection{ return $this->connection; }
 
-	protected function quoteValue($value) { return $this->connection->quoteValue($value); }
-	protected function escapeSQLEntity($value) { return $this->connection->escapeSQLEntity($value); }
-	protected function query($sql) { return $this->connection->query($sql); }
+	protected function quoteValue($value){ return $this->connection->quoteValue($value); }
+	protected function escapeSQLEntity($value){ return $this->connection->escapeSQLEntity($value); }
+	protected function query($sql){ return $this->connection->query($sql); }
 
-	public function insert(array $record, $insertIgnore = false) {
+	public function insert(array $record, $insertIgnore = false){
 		$data = [];
-		foreach ($record as $key => $value) if ($key != 'id') {
-			if (substr($key, 0, 1) === '!') {
+		foreach ($record as $key => $value) if ($key != 'id'){
+			if (substr($key, 0, 1) === '!'){
 				$key = substr($key, 1);
-			} else {
+			}else{
 				$value = $this->quoteValue($value);
 			}
 			$data[] = [$this->escapeSQLEntity($key), $value];
 		}
-		$sql = 'INSERT ' . ($insertIgnore ? 'IGNORE' : '') . ' INTO ' . $this->escTable .
+		$sql = 'INSERT ' . ( $insertIgnore ? 'IGNORE' : '' ) . ' INTO ' . $this->escTable .
 			' (' . join(', ', array_column($data, 0)) . ') ' .
 			' VALUE(' . join(', ', array_column($data, 1)) . ')';
 		$this->query($sql);
 		return $this->connection->lastInsertId();
 	}
 
-	public function update($record): int {
+	public function update($record): int{
 		$data = [];
-		foreach ($record as $key => $value) if ($key != 'id') {
-			if (substr($key, 0, 1) === '!') {
+		foreach ($record as $key => $value) if ($key != 'id'){
+			if (substr($key, 0, 1) === '!'){
 				$key = substr($key, 1);
-			} else {
+			}else{
 				$value = $this->quoteValue($value);
 			}
 			$data[] = $this->escapeSQLEntity($key) . '=' . $value;
@@ -59,5 +61,5 @@ class Repository {
 		return $this->query($sql)->rowCount();
 	}
 
-	public function delete(int $id) { return $this->query("DELETE FROM " . $this->escTable . " WHERE id = " . $this->quoteValue($id))->rowCount(); }
+	public function delete(int $id){ return $this->query("DELETE FROM " . $this->escTable . " WHERE id = " . $this->quoteValue($id))->rowCount(); }
 }

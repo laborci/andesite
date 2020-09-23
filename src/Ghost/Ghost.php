@@ -1,13 +1,20 @@
 <?php namespace Andesite\Ghost;
 
+use Andesite\Attachment\Attachment;
+use Andesite\Attachment\Collection;
+use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Ghost\Exception\ValidationError;
 use JsonSerializable;
-use Andesite\Attachment\AttachmentOwnerInterface;
+use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
 use Andesite\Ghost\Exception\InsufficientData;
+use Minime\Annotations\Reader;
+use Rah\Danpu\Dump;
 use Symfony\Component\Validator\Validation;
+
+
 /**
- * @property-read int   id
- * @property-read Model $model
+ * @property-read int        id
+ * @property-read Model|null $model
  */
 abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
@@ -15,37 +22,33 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	use GhostAttachmentTrait;
 
 	private $deleted;
-	protected $id;
+	private $attachmentCollections = [];
+	protected ?int $id = null;
 
 	public function isExists(): bool{ return (bool)$this->id; }
-
 	public function isDeleted(): bool{ return $this->deleted; }
-
 	function __toString(){ return get_called_class() . ' ' . $this->id; }
 
-#region Model Creation
+	static final public function init(){
+		/** @var Reader $reader */
+		$reader = ServiceContainer::get(Reader::class);
+		$annotations = $reader->getClassAnnotations(get_called_class());
 
-	private static function model(): ?Model{ return static::$model; }
-
-	private static function setModel(Model $model){ return static::$model = $model; }
-
-	public static function init(){
-		if (static::model() === null){
-			$model = static::createModel();
-			static::setModel($model);
+		if (is_null(static::$model)){
+			static::$model = new Model(get_called_class(),$annotations->get('database'), $table = $annotations->get('table'), $annotations->get('storage', $table), $annotations->get('mutable'));
+			static::model(static::$model);
+			static::extendModel(static::$model);
 		}
-		return static::model();
 	}
 
-	abstract static protected function createModel(): Model;
-
-#endregion
+	abstract static protected function extendModel(Model $model):Model;
+	abstract static protected function model(Model $model):Model;
 
 #region Magic Methods
 
 	public function __get(string $name){
-		if (array_key_exists($name, static::model()->getters)){
-			$getter = static::model()->getters[$name];
+		if (array_key_exists($name, static::$model->getters)){
+			$getter = static::$model->getters[$name];
 			switch ($getter['type']){
 				case 'virtual':
 					$method = $getter['method'];
@@ -53,27 +56,28 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 					else return $this->$method();
 					break;
 				case 'relation':
-					return static::model()->relations[$name]->get($this);
+					return static::$model->relations[$name]->get($this);
 					break;
 				case 'attachment':
-					return $this->getAttachmentCategoryManager($name);
+					return
+						$this->getAttachmentCollection($name);
 					break;
 			}
 		}
 		return null;
 	}
 
-	public function __isset(string $name){ return array_key_exists($name, static::model()->getters); }
+	public function __isset(string $name):bool{ return array_key_exists($name, static::$model->getters); }
 
 	public function __set($name, $value){
-		if (array_key_exists($name, static::model()->setters)){
-			$method = static::model()->setters[$name]['method'];
+		if (array_key_exists($name, static::$model->setters)){
+			$method = static::$model->setters[$name]['method'];
 			$this->$method($value);
 		}
 	}
 
 	public function __call(string $name, $arguments){
-		$relation = array_key_exists($name, static::model()->relations) ? static::model()->relations[$name] : null;
+		$relation = array_key_exists($name, static::$model->relations) ? static::$model->relations[$name] : null;
 		if ($relation && $relation->type === Relation::TYPE_HASMANY){
 			[$order, $limit, $offset] = array_pad($arguments, 3, null);
 			return $relation->get($this, $order, $limit, $offset);
@@ -85,12 +89,12 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 #region Data Packing
 
-	public function compose($record,$ignore=false): Ghost{
-		foreach (static::model()->fields as $fieldName => $field){
+	public function compose($record, $ignore = false): Ghost{
+		foreach (static::$model->fields as $fieldName => $field){
 			if (array_key_exists($fieldName, $record)){
 				$this->$fieldName = $field->compose($record[$fieldName]);
-			}elseif(!$ignore){
-				throw new InsufficientData(static::model()->table . ' ' . $fieldName);
+			}elseif (!$ignore){
+				throw new InsufficientData(static::$model->table . ' ' . $fieldName);
 			}
 		}
 		return $this;
@@ -98,7 +102,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 	public function decompose(){
 		$record = [];
-		foreach (static::model()->fields as $fieldName => $field){
+		foreach (static::$model->fields as $fieldName => $field){
 			$record[$fieldName] = $field->decompose($this->$fieldName);
 		}
 		return $record;
@@ -110,14 +114,14 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 	public function export(){
 		$record = [];
-		foreach (static::model()->fields as $fieldName => $field){
+		foreach (static::$model->fields as $fieldName => $field){
 			$record[$fieldName] = $field->export($this->$fieldName);
 		}
 		return $record;
 	}
 
 	public function import($data){
-		foreach (static::model()->fields as $fieldName => $field){
+		foreach (static::$model->fields as $fieldName => $field){
 			if (array_key_exists($fieldName, $data)){
 				$this->$fieldName = $field->import($data[$fieldName]);
 			}
@@ -130,8 +134,8 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 #region CRUD
 	public function delete(){
 		if ($this->isExists()){
-			if ($this->onBeforeDelete() === false || !static::model()->isMutable()) return false;
-			static::model()->repository->delete($this->id);
+			if ($this->onBeforeDelete() === false || !static::$model->mutable) return false;
+			static::$model->repository->delete($this->id);
 			$this->deleted = true;
 			$this->onAfterDelete();
 		}
@@ -139,7 +143,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	}
 
 	public function save(){
-		if (!static::model()->isMutable()) return false;
+		if (!static::$model->mutable) return false;
 		if ($this->onBeforeSave() === false) return false;
 		$id = $this->isExists() ? $this->update() : $this->insert();
 		$this->onAfterSave();
@@ -150,7 +154,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		if ($this->onBeforeUpdate() === false) return false;
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
-		static::model()->repository->update($this);
+		static::$model->repository->update($this);
 		$this->onAfterUpdate();
 		return $this->id;
 	}
@@ -159,20 +163,23 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		if ($this->onBeforeInsert() === false) return false;
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
-		$this->id = static::model()->repository->insert($this);
+		$this->id = static::$model->repository->insert($this);
 		$this->onAfterInsert();
 		return $this->id;
 	}
+
+	protected function validators():?ValidatorSet{}
 
 	/**
 	 * @return \Symfony\Component\Validator\ConstraintViolationList[]
 	 */
 	public function validate($onlymessage = true){
-		$validators = static::model()->getValidators();
+		$constraints = static::$model->validators->getConstraints();
+		if(!is_null($custom = $this->validators())) $constraints= array_merge_recursive($constraints, $custom->getConstraints());
 		$validator = Validation::createValidator();
 		$errors = [];
-		foreach ($validators as $field => $validators){
-			$violations = $validator->validate($this->$field, $validators);
+		foreach ($constraints as $field => $constraints){
+			$violations = $validator->validate($this->$field, $constraints);
 			for ($i = 0; $i < $violations->count(); $i++){
 				$error = [
 					'field'   => $field,
@@ -183,8 +190,9 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 			}
 		}
 		return $errors;
-		//return static::$model->validate($this, $onlymessage);
 	}
+
+	static protected function createModel(string $class, string $connection, string $table, bool $mutable = false):Model{return (static::$model = new Model($class, $connection, $table, $mutable));}
 
 #endregion
 
@@ -205,9 +213,9 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 	public function onAfterInsert(){ return true; }
 
-	public function onAttachmentAdded($data = null){ return true; }
+	public function onAttachmentAdded(Collection $collection, Attachment $attachment){ }
 
-	public function onAttachmentRemoved($data = null){ return true; }
+	public function onAttachmentRemoved(Collection $collection){ }
 #endregion
 
 }

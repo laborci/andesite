@@ -22,11 +22,10 @@ class RemoteLogSenderSocket extends AbstractRemoteLogSender{
 	}
 
 	protected function send($address, $message){
-		$this->connection = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
-		$message = json_encode($message);
-		$pieces = str_split($message, 1024);
-		foreach ($pieces as $piece) fwrite($this->connection, $piece);
-		fclose($this->connection);
+		$socket = (new \Socket\Raw\Factory())->createUnix();
+		$socket->connect( $address);
+		$socket->write(json_encode($message));
+		$socket->close();
 	}
 
 }

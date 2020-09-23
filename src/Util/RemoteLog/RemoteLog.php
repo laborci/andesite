@@ -3,18 +3,29 @@
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\SqlLogInterface;
 use Andesite\Util\Dumper\DumpInterface;
+use Andesite\Util\ErrorHandler\ErrorHandlerInterface;
 use Andesite\Util\ErrorHandler\ExceptionHandlerInterface;
 use Andesite\Util\ErrorHandler\FatalErrorHandlerInterface;
 
 use Symfony\Component\HttpFoundation\Request;
 
-class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface, DumpInterface, SqlLogInterface{
+class RemoteLog implements FatalErrorHandlerInterface, ExceptionHandlerInterface, ErrorHandlerInterface, DumpInterface, SqlLogInterface{
 
 	/** @var RemoteLogSender  */
 	private $sender;
 
 	public function __construct(AbstractRemoteLogSender $sender){
 		$this->sender = $sender;
+	}
+
+	public function handleError(int $errno , string $errstr , string $errfile , int $errline){
+		$this->sender->log('error', [
+			'errorlevel' => $this->friendlyErrorType($errno) ,
+			'message'    => $errstr,
+			'file'       => $errfile,
+			'line'       => $errline,
+			'trace'      => [],
+		]);
 	}
 
 	public function handleFatalError(){

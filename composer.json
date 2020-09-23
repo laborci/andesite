@@ -10,6 +10,11 @@
         }
     ],
     "require": {
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-sqlite3": "*",
+        "ext-gd": "*",
+        "ext-simplexml": "*",
         "symfony/http-foundation": "^3.3",
         "nabil1337/case-helper": "^0.1.0",
         "twig/twig":"^2.0",
@@ -22,7 +27,12 @@
         "rah/danpu": "^2.7",
         "symfony/validator": "^5.1",
         "lcobucci/jwt": "^4.0@alpha",
-        "camcima/php-mysql-diff": "^1.2"
+        "camcima/php-mysql-diff": "^1.2",
+        "phpmailer/phpmailer": "^6.1",
+        "erusev/parsedown": "^1.7",
+        "badcow/lorem-ipsum": "^1.1",
+        "lcobucci/jwt": "^4.0@alpha",
+        "clue/socket-raw": "^1.4"
     },
     "autoload": {
         "psr-4": {

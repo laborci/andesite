@@ -1,4 +1,4 @@
-<?php namespace Andesite\Attachment;
+<?php namespace Andesite\Attachment\Thumbnail;
 
 use Andesite\Mission\Web\Responder\PageResponder;
 
@@ -32,15 +32,17 @@ class ThumbnailResponder extends PageResponder{
 		}
 		$op = array_pop($parts);
 		$file = join('.', $parts);
-		$path = $config['path'] . '/' . preg_replace("/-/", '/', $pathId) . '/' . $file;
+		$path = $config['source'] . '/' . preg_replace("/-/", '/', $pathId) . '/' . $file;
 
 		$url = $file . '.' . $op . ( ( $jpegquality ) ? ( '.' . $jpegquality ) : ( '' ) ) . '.' . $pathId . '.' . $ext;
-		$newHash = base_convert(crc32($url . $config['thumbnail']['secret']), 10, 32);
+		$newHash = base_convert(crc32($url . $config['secret']), 10, 32);
 
-		if (!is_dir($config['thumbnail']['path'])) mkdir($config['thumbnail']['path']);
-		$this->target = $config['thumbnail']['path'] . '/' . $uri;
+		if (!is_dir($config['path'])) mkdir($config['path']);
+		$this->target = $config['path'] . '/' . $uri;
 		$this->source = $path;
 		$this->ext = $ext;
+
+
 
 		if ($newHash != $hash || !file_exists($path)){
 			// TODO: 404

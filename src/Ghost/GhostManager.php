@@ -1,6 +1,6 @@
 <?php namespace Andesite\Ghost;
 
-use Andesite\Attachment\AttachmentRepository;
+//use Andesite\Attachment\AttachmentRepository;
 use Andesite\Attachment\ThumbnailResponder;
 use Andesite\Core\Module\Module;
 use Andesite\Core\ServiceManager\ServiceContainer;
@@ -9,20 +9,18 @@ use Andesite\Mission\Web\Routing\Router;
 use Andesite\Util\CodeFinder\CodeFinder;
 use Composer\Autoload\ClassLoader;
 use Minime\Annotations\Reader;
+use ReflectionClass;
+
 
 class GhostManager extends Module{
 
-	/** @var \Minime\Annotations\Reader */
-	private $reader;
-	private $ghosts = [];
-	private $decorator;
-	private $namespace;
-	private $attachment = null;
-	/** @var \Composer\Autoload\ClassLoader */
-	private $classLoader;
+	private \Minime\Annotations\Reader $reader;
+	private array $namespace;
+	private \Composer\Autoload\ClassLoader $classLoader;
+	private \Andesite\Attachment\Repository $attachmentRepository;
 
-	public function getGhosts(){ return $this->ghosts; }
-	public function getAttachment(){ return $this->attachment; }
+	public function getGhosts(){ return CodeFinder::Service()->Psr4ClassSeeker($this->namespace['ghost']); }
+	public function getAttachmentRepository(): \Andesite\Attachment\Repository{ return $this->attachmentRepository; }
 	public function getNamespace(){ return $this->namespace; }
 
 	public function __construct(Reader $reader, ClassLoader $classLoader){
@@ -30,46 +28,24 @@ class GhostManager extends Module{
 		$this->classLoader = $classLoader;
 	}
 
-	public function routeThumbnail(Router $router){
-		AttachmentRepository::Module()->routeThumbnails($router, $this->attachment);
-	}
-
 	public function setup($config){
 		$this->namespace = $config['namespace'];
-		$this->decorator = $config['decorator'];
-		$this->attachment = $config['attachment'];
+		$this->attachmentConfig = $config['attachment-config'];
 	}
 
-	protected function load(ConnectionFactory $factory, AttachmentRepository $attachmentRepository){
-		$ghosts = $this->reader->getClassAnnotations($this->decorator)->getAsArray('ghost');
-		foreach ($ghosts as $ghost){
-			$ghost = explode(':', str_replace('@', ':', $ghost));
-			if (count($ghost) === 1) $ghost[1] = lcfirst($ghost[0]);
-			if (count($ghost) === 2) $ghost[2] = 'default';
-			$this->ghosts[$ghost[0]] = [
-				'name'     => $ghost[0],
-				'table'    => $ghost[1],
-				'database' => $ghost[2],
-				'class'    => $this->namespace . '\\' . $ghost[0],
-			];
-		}
-		$this->init();
-	}
-
-	public function init(){
-		$decoratorObject = new $this->decorator();
-		$location = CodeFinder::Service()->Psr4ResolveNamespace($this->namespace);
-
-		foreach ($this->ghosts as $ghost){
-			$this->classLoader->addClassMap([$ghost['class'] . 'Ghost' => realpath($location . $ghost['name'] . '.ghost.php')]);
-		}
-
-		foreach ($this->ghosts as $ghost){
-			$decoratorMethod = lcfirst($ghost['name']);
-			if (file_exists(realpath($location . $ghost['name'] . '.ghost.php')) && class_exists($ghost['class'])){
-				$model = $ghost['class']::init($this);
-				if (method_exists($decoratorObject, $decoratorMethod)) $decoratorObject->$decoratorMethod($model);
+	protected function load(ConnectionFactory $factory){
+		$this->attachmentRepository = new \Andesite\Attachment\Repository($this->attachmentConfig);
+		spl_autoload_register (function ($class){
+			if(file_exists($file = $this->classLoader->findFile($class))){
+				require_once $file;
+				if (is_subclass_of($class, Ghost::class) && !( new ReflectionClass($class) )->isAbstract()) $class::init();
 			}
-		}
+		},true, true);
+
+	}
+
+
+	public function routeThumbnail(Router $router){
+		$this->attachmentRepository->routeThumbnails($router);
 	}
 }

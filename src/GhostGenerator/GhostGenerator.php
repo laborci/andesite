@@ -1,14 +1,27 @@
 <?php namespace Andesite\GhostGenerator;
 
+use Andesite\Attachment\Collection;
 use Andesite\CodexGhostHelper\CodexHelperGenerator;
 use Andesite\Core\ServiceManager\Service;
+use Andesite\Core\ServiceManager\ServiceContainer;
+use Andesite\DBAccess\Connection\Filter\Comparison;
+use Andesite\DBAccess\Connection\PDOConnection;
 use Andesite\DBAccess\ConnectionFactory;
 use Andesite\Ghost\Field;
+use Andesite\Ghost\Ghost;
 use Andesite\Ghost\GhostManager;
 use Andesite\Ghost\Model;
 use Andesite\Ghost\Relation;
 use Andesite\Util\CodeFinder\CodeFinder;
+use Application\Ghost\Article;
+use Application\Ghost\Article2;
 use Application\Ghosts;
+use CaseHelper\CamelCaseHelper;
+use CaseHelper\PascalCaseHelper;
+use CaseHelper\SnakeCaseHelper;
+use CaseHelper\Test\Unit\CaseHelper\SpaceCaseInputTest;
+use Minime\Annotations\Reader;
+use ReflectionClass;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tests\Fixtures\DummyOutput;
@@ -18,230 +31,234 @@ use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\PositiveOrZero;
 use Symfony\Component\Validator\Constraints\Type;
 
+
 class GhostGenerator{
 
 	use Service;
 
+
 	protected $ghosts;
 	protected $ghostNamespace;
 	protected $ghostPath;
-	/** @var SymfonyStyle */
-	protected $style;
+	protected ?SymfonyStyle $style;
 
-	public function __invoke(SymfonyStyle $style = null, $config){
-		$this->config = $config;
-		$this->ghosts = GhostManager::Module()->getGhosts();
+	public function setup(SymfonyStyle $style = null): GhostGenerator{
 		$this->style = is_null($style) ? new SymfonyStyle(new ArgvInput(), new DummyOutput()) : $style;
-		$this->ghostNamespace = GhostManager::Module()->getNamespace();
-		$this->ghostPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($this->ghostNamespace));
-		$this->style->title('GHOST CREATOR');
-
-		foreach ($this->ghosts as $name => $ghost){
-			$database = $ghost['database'];
-			$table = $ghost['table'];
-			$this->style->section($name);
-			$exists = $this->generateEntity($name, $table);
-			$this->generateGhostFromDatabase($name, $table, $database);
-			if ($exists) $this->updateGhost($name);
-		}
-		$this->style->success('done.');
-		CodexHelperGenerator::Service()->execute($this->style, $config['codexhelper']);
+		return $this;
 	}
 
-	protected function updateGhost($name){
+	public function create($name){
 
-		$file = "{$this->ghostPath}/{$name}.ghost.php";
-		$this->style->write("Update Ghost ");
-		$ghostClass = $this->ghostNamespace . '\\' . $name;
+		$namespaces = GhostManager::Module()->getNamespace();
 
-		/** @var Model $model */
-		$model = $ghostClass::$model;
+		$ghostPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($namespaces['ghost']));
+		$shadowPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($namespaces['shadow']));
+		$finderPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($namespaces['finder']));
 
-		$annotations = [];
-		$properties = [];
-		$getterSetter = [];
-		$attachmentConstants = [];
+		$table = ( new CamelCaseHelper() )->toSnakeCase($name);
+		$class = ucfirst(( new SnakeCaseHelper() )->toCamelCase($table));
 
+		$translate = [
+			"{{name}}"             => $class,
+			"{{table}}"            => $table,
+			"{{ghost-namespace}}"  => $namespaces['ghost'],
+			"{{shadow-namespace}}" => $namespaces['shadow'],
+			"{{finder-namespace}}" => $namespaces['finder'],
+		];
+
+		$this->style->writeln("Generate Entity ");
+
+		$files = [
+			"ghost.txt"       => "{$ghostPath}/{$name}.php",
+			"shadow.txt" => "{$shadowPath}/__{$name}.php",
+			"finder.txt"      => "{$finderPath}/__{$name}.php",
+		];
+
+		foreach ($files as $templateFile => $file){
+			$this->style->write("- {$file}");
+			if (file_exists($file)){
+				$this->style->writeln(" - [ALREADY EXISTS]");
+			}else{
+				$template = file_get_contents(__DIR__ . '/@resource/' . $templateFile);
+				$template = strtr($template, $translate);
+				file_put_contents($file, $template);
+				$this->style->writeln(" - [OK]");
+			}
+		}
+
+	}
+
+	public function generate($name = null){
+
+		$namespaces = GhostManager::Module()->getNamespace();
+
+		$ghosts = is_null($name) ? GhostManager::Module()->getGhosts() : [$namespaces['ghost'] . '\\' . $name];
+
+		foreach ($ghosts as $ghost){
+
+			$ref = new ReflectionClass($ghost);
+
+			/** @var Model $model */
+			$model = $ghost::$model;
+
+			$name = $ref->getShortName();
+			$this->style->writeln($name);
+
+			$model = new Model($ghost, $model->connection->getName(), $model->table, $model->mutable);
+			$fieldsdefinitions = $this->fetch($model);
+			$this->updateShadow($model, $fieldsdefinitions);
+
+			if(count($model->attachmentStorage->categories)) $model->attachmentStorage->initialize();
+		}
+		$this->style->success('done.');
+	}
+
+	protected function fetch(Model $model){
+		$smartAccess = $model->connection->createSmartAccess();
+		$this->style->writeln("- Fetching information table $model->table");
+		$schemafields = $smartAccess->getTableSchema($model->table);
+		/** @var \Andesite\GhostGenerator\DBFieldConverter[] $fields */
+		$fields = [];
+		$fieldRef = new ReflectionClass(Field::class);
+
+		foreach ($schemafields as $field){
+			$f = new DBFieldConverter($field);
+			$model->addField($f->name, $fieldRef->getConstant('TYPE_' . $f->fieldType), $f->options);
+			$fieldsdefinition = [
+				'name'       => $f->name,
+				'type'       => $f->fieldType,
+				'options'    => $f->options,
+				'validators' => [],
+			];
+			foreach ($f->validators as $validator) {
+				$fieldsdefinition['validators'][] = [
+					'name'    => $f->name,
+					'type'    => $validator[0],
+					'options' => count($validator) > 1 ? $validator[1] : null,
+				];
+			}
+			$fieldsdefinitions[] = $fieldsdefinition;
+		}
+		$model->protectField('id');
+
+		$ghost = $model->ghost;
+		$ref = new ReflectionClass($ghost);
+		$extendModel = $ref->getMethod('extendModel');
+		$extendModel->setAccessible(true);
+		$extendModel->invoke(null, $model);
+		return $fieldsdefinitions;
+	}
+
+	protected function updateShadow(Model $model, $fielddefinition){
+		$name = (new ReflectionClass($model->ghost))->getShortName();
+
+		$this->style->writeln("- Updating $name shadow");
+
+		$encoder = new \Riimu\Kit\PHPEncoder\PHPEncoder();
+		$types = [
+			Field::TYPE_JSON     => 'array',
+			Field::TYPE_BOOL     => 'bool',
+			Field::TYPE_DATE     => '\Valentine\Date',
+			Field::TYPE_DATETIME => '\DateTime',
+			Field::TYPE_TIME     => '\DateTime',
+			Field::TYPE_ENUM     => 'string',
+			Field::TYPE_SET      => 'array',
+			Field::TYPE_STRING   => 'string',
+			Field::TYPE_INT      => 'int',
+			Field::TYPE_ID       => 'int',
+			Field::TYPE_FLOAT    => 'float',
+		];
+		$protectIdField = "\t\t\t->protectField('id')";
+		$fieldAdditions = [];
+		$fieldValidators = [];
+		$fields = [];
+		$fieldConstants = [];
+		$enumConstants = [];
+		$comparators = [];
+		$collections = [];
+		$protecteds = [];
+		$virtuals = [];
+		$abstracts = [];
+		$relations = [];
+
+		foreach ($fielddefinition as $field){
+			$fieldAdditions[] = "\t\t\t" . '->addField("' . $field['name'] . '", Field::TYPE_' . $field['type'] . ', ' . $encoder->encode($field['options'], ['whitespace' => false]) . ')';
+		}
+		foreach ($fielddefinition as $field) foreach ($field['validators'] as $validator){
+			$fieldValidators[] = "\t\t\t" . '->addValidator("' . $field['name'] . '", new \\' . $validator['type'] . '(' . ( is_null($validator['options']) ? '' : $encoder->encode($validator['options'], ['whitespace' => false]) ) . '))';
+		}
 		foreach ($model->fields as $field){
 
-			$type = '';
-			switch ($field->type){
-				case Field::TYPE_JSON:
-					$type = 'array';
-					break;
-				case Field::TYPE_BOOL:
-					$type = 'boolean';
-					break;
-				case Field::TYPE_DATE:
-					$type = '\Valentine\Date';
-					break;
-				case Field::TYPE_DATETIME:
-				case Field::TYPE_TIME:
-					$type = '\DateTime';
-					break;
-				case Field::TYPE_ENUM:
-				case Field::TYPE_STRING:
-					$type = 'string';
-					break;
-				case Field::TYPE_SET:
-					$type = 'array';
-					break;
-				case Field::TYPE_INT:
-				case Field::TYPE_ID:
-					$type = 'int';
-					break;
-				case Field::TYPE_FLOAT:
-					$type = 'float';
-					break;
+			$fields[] = "\t" . ( $field->protected ? 'protected' : 'public' ) . " ?" . $types[$field->type] . " \$" . $field->name . " = null;";
+
+			$fieldConstants[] = "\t" . 'const ' . $field->name . ' = "' . $field->name . '";';
+
+			$comparators[] = ' * @method static Comparison ' . $field->name . '()';
+
+			if (is_array($field->options)){
+				foreach ($field->options as $option){
+					$enumConstants[] = "\t" . 'const ' . $field->name . '__' . $option . ' = "' . $option . '";';
+				}
 			}
-			$properties[] = "\t" . "/** @var {$type} \${$field->name} */";
-			$properties[] = "\t" . ( $field->protected ? 'protected' : 'public' ) . " \${$field->name};";
 
 			if ($field->protected){
-				if ($field->setter !== false && $field->getter !== false)
-					$annotations[] = " * @property $" . $field->name;
-				elseif ($field->getter !== false)
-					$annotations[] = " * @property-read $" . $field->name;
-				elseif ($field->setter !== false)
-					$annotations[] = " * @property-write $" . $field->name;
-
-				if (is_string($field->getter))
-					$getterSetter[] = "\t" . 'abstract protected function ' . $field->getter . '();';
-
-				if (is_string($field->setter))
-					$getterSetter[] = "\t" . 'abstract protected function ' . $field->setter . '($value);';
+				if ($field->setter !== false && $field->getter !== false) $protecteds[] = " * @property $" . $field->name;
+				elseif ($field->getter !== false) $protecteds[] = " * @property-read $" . $field->name;
+				elseif ($field->setter !== false) $protecteds[] = " * @property-write $" . $field->name;
+				if (is_string($field->getter)) $abstracts[] = "\t" . 'abstract protected function ' . $field->getter . '();';
+				if (is_string($field->setter)) $abstracts[] = "\t" . 'abstract protected function ' . $field->setter . '($value);';
 			}
+		}
+
+		foreach ($model->attachmentStorage->categories as $category){
+			$collections[] = " * @property-read Collection $" . $category->name;
 		}
 
 		foreach ($model->virtuals as $field){
-
-			if (strpos($field['type'], '\\') !== false){
-				$field['type'] = '\\' . trim($field['type'], '\\');
-			}
-
-			if ($field['setter'] !== false && $field['getter'] !== false)
-				$annotations[] = " * @property " . $field['type'] . " $" . $field['name'];
-			elseif ($field['getter'] !== false)
-				$annotations[] = " * @property-read " . $field['type'] . " $" . $field['name'];
-			elseif ($field['setter'] !== false)
-				$annotations[] = " * @property-write " . $field['type'] . " $" . $field['name'];
-			if (is_string($field['getter']))
-				$getterSetter[] = "\t" . 'abstract protected function ' . $field['getter'] . '()' . ( $field['type'] ? ':' . $field['type'] : '' ) . ';';
-			if (is_string($field['setter']))
-				$getterSetter[] = "\t" . 'abstract protected function ' . $field['setter'] . '(' . $field['type'] . '$value);';
-		}
-
-		foreach ($model->getAttachmentStorage()->getCategories() as $category){
-			$annotations[] = ' * @property-read AttachmentCategoryManager $' . $category->getName();
-			$attachmentConstants[] = "\tconst A_" . $category->getName() . ' = "' . $category->getName() . '";';
-
+			if (strpos($field['type'], '\\') !== false) $field['type'] = '\\' . trim($field['type'], '\\');
+			if($field['type']) $field['type'] .= ' ';
+			if ($field['setter'] !== false && $field['getter'] !== false) $virtuals[] = " * @property " . $field['type'] . "$" . $field['name'];
+			elseif ($field['getter'] !== false)	$virtuals[] = " * @property-read " . $field['type'] . "$" . $field['name'];
+			elseif ($field['setter'] !== false)	$virtuals[] = " * @property-write " . $field['type'] . "$" . $field['name'];
+			if (is_string($field['getter'])) $abstracts[] = "\t" . 'abstract protected function ' . $field['getter'] . '()' . ( $field['type'] ? ':' . $field['type'] : '' ) . ';';
+			if (is_string($field['setter'])) $abstracts[] = "\t" . 'abstract protected function ' . $field['setter'] . '(' . $field['type'] . '$value);';
 		}
 
 		foreach ($model->relations as $relation){
 			switch ($relation->type){
 				case Relation::TYPE_BELONGSTO:
-					$annotations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . ' $' . $relation->name;
+					$relations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . ' $' . $relation->name;
 					break;
 				case Relation::TYPE_HASMANY:
-					$annotations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . '[] $' . $relation->name;
-					$annotations[] = ' * @method \\' . $relation->descriptor['ghost'] . '[] ' . $relation->name . '($order = null, $limit = null, $offset = null)';
+					$relations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . '[] $' . $relation->name;
+					$relations[] = ' * @method \\' . $relation->descriptor['ghost'] . '[] ' . $relation->name . '($order = null, $limit = null, $offset = null)';
 					break;
 			}
 		}
 
-		$template = file_get_contents($file);
-		$template = str_replace('/*ghost-generator-properties*/', join("\n", $properties), $template);
-		$template = str_replace(' * ghost-generator-annotations', join("\n", $annotations), $template);
-		$template = str_replace('/*ghost-generator-getters-setters*/', join("\n", $getterSetter), $template);
-		$template = str_replace('/*attachment-constants*/', join("\n", $attachmentConstants), $template);
+		$template = file_get_contents(__DIR__ . '/@resource/shadow.txt');
+		$template = str_replace('# @virtuals', join("\n", $virtuals), $template);
+		$template = str_replace('# @protecteds', join("\n", $protecteds), $template);
+		$template = str_replace('# @collections', join("\n", $collections), $template);
+		$template = str_replace('# @relations', join("\n", $relations), $template);
+		$template = str_replace('# @comparators', join("\n", $comparators), $template);
+		$template = str_replace('# abstracts', join("\n", $abstracts), $template);
+		$template = str_replace('# enum-constants', join("\n", $enumConstants), $template);
+		$template = str_replace('# field-constants', join("\n", $fieldConstants), $template);
+		$template = str_replace('# fields', join("\n", $fields), $template);
+		$template = str_replace('# field-additions', join("\n", $fieldAdditions), $template);
+		$template = str_replace('# field-validators', join("\n", $fieldValidators), $template);
+		$template = str_replace('# protect-id-field', $protectIdField, $template);
 
-		$this->style->write("- {$file}");
-		file_put_contents($file, $template);
-		$this->style->writeln(" - [OK]");
-	}
+		$finderNamesapce = GhostManager::Module()->getNamespace()['finder'];
+		$shadowNamespace = GhostManager::Module()->getNamespace()['shadow'];
 
-	protected function generateGhostFromDatabase($name, $table, $database){
-
-		$file = "{$this->ghostPath}/{$name}.ghost.php";
-
-		$this->style->write("Connecting to database ");
-		$this->style->write("- ${database}");
-		/** @var \Andesite\DBAccess\Connection\PDOConnection $connection */
-		$connection = ConnectionFactory::Module()->get($database);
-
-		$smartAccess = $connection->createSmartAccess();
-		$this->style->writeln(" - [OK]");
-
-		$this->style->write("Fetching table information ");
-		$this->style->write("- ${table}");
-		//$fields = $smartAccess->getFieldData($table);
-		$schemafields = $smartAccess->getTableSchema($table);
-		/** @var \Andesite\GhostGenerator\DBFieldConverter[] $fields */
-		$fields = [];
-
-		foreach ($schemafields as $field){
-			$fields[$field['COLUMN_NAME']] = new DBFieldConverter($field);
-		}
-		$this->style->writeln(" - [OK]");
-
-		$constants = [];
-		$addFields = [];
-		$comparers = [];
-		$fieldConstants = [];
-		$validators = [];
-		$encoder = new \Riimu\Kit\PHPEncoder\PHPEncoder();
-		foreach ($fields as $field){
-
-			$options = null;
-			if (is_array($field->options)){
-				foreach ($field->options as $value){
-					$constants[] = "\t" . 'const V_' . $field->name . '_' . $value . ' = "' . $value . '";';
-				}
-			}
-			$comparers[] = "\t\t" . "public static function f_" . $field->name . "(){return new Comparison('" . $field->name . "');}";
-			$addFields[] = "\t\t" . '$model->addField("' . $field->name . '", Field::TYPE_' . $field->fieldType . ',' . $encoder->encode($field->options, ['whitespace' => false]) . ');';
-			$fieldConstants[] = "\t" . 'const F_' . $field->name . ' = "' . $field->name . '";';
-			foreach ($field->validators as $validator){
-				$validators[] = "\t\t" . '$model->addValidator("' . $field->name . '", new \\' . $validator[0] . '(' . ( count($validator) > 1 ? $encoder->encode($validator[1], ['whitespace' => false]) : '' ) . '));';
-			}
-
-		}
-		$addFields[] = "\t\t" . '$model->protectField("id");';
-
-		$template = file_get_contents(__DIR__ . '/@resource/ghost.txt');
-
+		$template = str_replace('{{shadow-namespace}}', $shadowNamespace, $template);
+		$template = str_replace('{{finder-namespace}}', $finderNamesapce, $template);
 		$template = str_replace('{{name}}', $name, $template);
-		$template = str_replace('{{table}}', $table, $template);
-		$template = str_replace('{{connectionName}}', $database, $template);
-		$template = str_replace('{{namespace}}', $this->ghostNamespace, $template);
-		$template = str_replace('{{add-fields}}', join("\n", $addFields), $template);
-		$template = str_replace('{{validators}}', join("\n", $validators), $template);
-		$template = str_replace('{{constants}}', join("\n", $constants), $template);
-		$template = str_replace('{{fieldConstants}}', join("\n", $fieldConstants), $template);
-		$template = str_replace('{{comparers}}', join("\n", $comparers), $template);
 
-		$this->style->write("Generate Ghost ");
-		$this->style->write("- {$file}");
-		file_put_contents($file, $template);
-		$this->style->writeln(" - [OK]");
-	}
+		$shadowPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($shadowNamespace));
 
-	protected function generateEntity($name, $table){
-		$this->style->write("Generate Entity ");
-		$file = "{$this->ghostPath}/{$name}.php";
-		$this->style->write("- {$file}");
-
-		if (file_exists($file)){
-			$this->style->writeln(" - [ALREADY EXISTS]");
-			return true;
-		}else{
-			$template = file_get_contents(__DIR__ . '/@resource/entity.txt');
-			$template = str_replace('{{namespace}}', $this->ghostNamespace, $template);
-			$template = str_replace('{{name}}', $name, $template);
-			$template = str_replace('{{table}}', $table, $template);
-			file_put_contents($file, $template);
-			$this->style->writeln(" - [OK]");
-			return false;
-		}
+		file_put_contents(		$shadowPath.'/__'.$name.'.php', $template);
 	}
 }

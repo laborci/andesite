@@ -1,6 +1,5 @@
-<?php namespace Andesite\Attachment;
+<?php namespace Andesite\Attachment\Thumbnail;
 
-use Andesite\Attachment\Exception\SourceFileNotFound;
 use Symfony\Component\HttpFoundation\File\File;
 
 /**
@@ -27,14 +26,13 @@ class Thumbnail{
 	public function __construct(File $file, array $config){
 		$this->file = $file;
 
-		$this->sourcePath = $config['source-path'];
+		$this->sourcePath = $config['source'];
 		$this->urlBase = $config['url'];
 		$this->path = $config['path'];
 		$this->secret = $config['secret'];
 		$this->jpegQuality = $config['jpeg-quality'] ?? 80;
 
-		if (strpos($file->getPath(), $this->sourcePath) !== 0) throw new SourceFileNotFound();
-		$this->pathId = str_replace('/', '-', substr(trim($file->getPath(), '/'), strlen($this->sourcePath)));
+		$this->pathId = str_replace('/', '-', substr(trim($file->getPath(), '/'), strlen(trim($this->sourcePath,'/'))));
 	}
 
 	public function purge(){

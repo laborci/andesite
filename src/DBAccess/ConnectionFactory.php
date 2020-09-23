@@ -24,14 +24,15 @@ class ConnectionFactory extends Module{
 		if (!array_key_exists($name, $this->connections)){
 			$connection = null;
 			if (array_key_exists($name, $this->config['databases'])){
-				$connection = $this->factory($this->config['databases'][$name]);
+				$connection = $this->factory($name);
 			}
 			$this->connections[$name] = $connection;
 		}
 		return $this->connections[$name];
 	}
 
-	protected function factory($url): PDOConnection{
+	protected function factory($name): PDOConnection{
+		$url = $this->config['databases'][$name];
 
 		$url = parse_url($url);
 
@@ -44,7 +45,7 @@ class ConnectionFactory extends Module{
 		parse_str($url['query'], $options);
 		$charset = $options['charset'];
 
-		$connection = new PDOConnection("{$scheme}:host={$host};dbname={$database};port={$port};charset={$charset}", $user, $pass);
+		$connection = new PDOConnection("{$scheme}:host={$host};dbname={$database};port={$port};charset={$charset}", $user, $pass, null, $name);
 
 		$connection->setAttribute(PDOConnection::ATTR_PERSISTENT, true);
 		$connection->setAttribute(PDOConnection::ATTR_ERRMODE, PDOConnection::ERRMODE_EXCEPTION);

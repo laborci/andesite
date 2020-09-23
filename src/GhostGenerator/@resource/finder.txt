@@ -1,0 +1,6 @@
+<?php namespace {{finder-namespace}}; /**
+ * Nobody uses this class, it exists only to help the code completion
+ * @method \Application\Ghost\{{name}}[] collect( $limit = null, $offset = null )
+ * @method \Application\Ghost\{{name}}[] collectPage( $pageSize, $page, &$count = 0 )
+ * @method \Application\Ghost\{{name}} pick()
+ */ abstract class __{{name}} extends \Andesite\DBAccess\Connection\Finder{}

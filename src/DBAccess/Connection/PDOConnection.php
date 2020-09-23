@@ -9,14 +9,17 @@ class PDOConnection extends \PDO{
 	private $username;
 	private $passwd;
 	private $options;
+	private $name;
 
 	public function getDsn(){ return $this->dsn; }
+	public function getName(){ return $this->name; }
 	public function getUsername(){ return $this->username; }
 	public function getPasswd(){ return $this->passwd; }
 	public function getOptions(){ return $this->options; }
 
-	public function __construct($dsn, $username = null, $passwd = null, $options = null){
+	public function __construct($dsn, $username = null, $passwd = null, $options = null, $name = null){
 		$this->dsn = $dsn;
+		$this->name = $name;
 		$this->username = $username;
 		$this->passwd = $passwd;
 		$this->options = $options;

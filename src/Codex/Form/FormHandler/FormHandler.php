@@ -115,4 +115,8 @@ class FormHandler implements JsonSerializable{
 	public function deleteAttachment($id, $file, $category){ return $this->dataProvider->deleteAttachment($id, $file, $category); }
 
 	public function cropAttachment($id, $file, $category, $data){ return $this->dataProvider->cropAttachment($id, $file, $category, $data); }
+
+	public function renameAttachment($id, $file, $category, $newname){ return $this->dataProvider->renameAttachment($id, $file, $category, $newname); }
+
+	public function reorderAttachment($id, $file, $category, $sequence){ return $this->dataProvider->reorderAttachment($id, $file, $category, $sequence); }
 }

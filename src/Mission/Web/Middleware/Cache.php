@@ -18,11 +18,9 @@ class Cache extends Middleware {
 			$cache = new FileCache($this->outputCachePath);
 			$cacheKey = crc32($this->getRequest()->getRequestUri());
 			if($cache->isValid($cacheKey)){
-				dump('cached');
 				$this->setResponse(unserialize($cache->get($cacheKey)));
 				$this->getResponse()->headers->set('x-cached-until', $cache->getAge($cacheKey)*-1);
 			}else {
-				dump('gen');
 				$this->next();
 				if($this->getRequest()->attributes->getBoolean('cache', false)){
 					$cacheInterval = $this->getRequest()->attributes->getInt('cache-interval', 60);
