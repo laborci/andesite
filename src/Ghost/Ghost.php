@@ -168,7 +168,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $this->id;
 	}
 
-	protected function validators():?ValidatorSet{}
+	protected function validators():?ValidatorSet{return null;}
 
 	/**
 	 * @return \Symfony\Component\Validator\ConstraintViolationList[]
