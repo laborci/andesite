@@ -1,6 +1,7 @@
 <?php namespace Andesite\Attachment;
 
 use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
+use ArrayIterator;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -53,7 +54,7 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
 	}
 	// Getters
 
-	public function __isset($name){ return array_key_exists($name, ['array', 'count', 'first', 'category']); }
+	public function __isset($name){ return in_array($name, ['array', 'count', 'first', 'category']); }
 	public function __get($key){
 		switch ($key){
 			case 'array':
@@ -72,13 +73,15 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
 	// Array Behaviour
 
 	// IteratorAggregate
-	public function getIterator(): AttachmentIterator{ return $this->lazyLoad() ?: new AttachmentIterator($this->attachments); }
+	/** @return AttachmentIterator */
+	public function getIterator(): ArrayIterator{ return $this->lazyLoad() ?: new ArrayIterator($this->attachments); }
 
 	// Countable
 	public function count(){ return $this->lazyLoad() ?: count($this->attachments); }
 
 	// ArrayAccess
-	public function offsetGet($offset): Attachment{
+	/** @return \Andesite\Attachment\Attachment */
+	public function offsetGet($offset){
 		if(is_numeric($offset)) return $this->lazyLoad() ?: $this->attachments[$offset];
 		return $this->__get($offset);
 	}
