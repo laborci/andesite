@@ -104,7 +104,7 @@ class GhostGenerator{
 			$name = $ref->getShortName();
 			$this->style->writeln($name);
 
-			$model = new Model($ghost, $model->connection->getName(), $model->table, $model->mutable);
+			$model = new Model($ghost, $model->connection->getName(), $model->table, $model->storage, $model->mutable);
 			$fieldsdefinitions = $this->fetch($model);
 			$this->updateShadow($model, $fieldsdefinitions);
 

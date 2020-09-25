@@ -11,6 +11,7 @@
     ],
     "require": {
         "ext-json": "*",
+        "ext-curl": "*",
         "ext-pdo": "*",
         "ext-sqlite3": "*",
         "ext-gd": "*",
