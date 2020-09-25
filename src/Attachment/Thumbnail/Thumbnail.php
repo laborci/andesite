@@ -32,7 +32,7 @@ class Thumbnail{
 		$this->secret = $config['secret'];
 		$this->jpegQuality = $config['jpeg-quality'] ?? 80;
 
-		$this->pathId = str_replace('/', '-', substr(trim($file->getPath(), '/'), strlen(trim($this->sourcePath,'/'))));
+		$this->pathId = str_replace('/', '-', substr($file->getPath(), strlen(realpath($this->sourcePath).'/')));
 	}
 
 	public function purge(){
