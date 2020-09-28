@@ -6,6 +6,7 @@ use Andesite\Util\Dumper\DumpInterface;
 use Andesite\Util\ErrorHandler\ExceptionHandlerInterface;
 use Andesite\Util\ErrorHandler\FatalErrorHandlerInterface;
 
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 class RemoteLogSenderSocket extends AbstractRemoteLogSender{
@@ -14,7 +15,9 @@ class RemoteLogSenderSocket extends AbstractRemoteLogSender{
 
 	public function __construct($address, $requestId, $method, $host, $path){
 		parent::__construct($address, $requestId, $method, $host, $path);
-		$this->connection = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
+		try{
+			$this->connection = stream_socket_client('unix://' . $address, $errorCode, $errorMessage, 12);
+		}catch (Exception $e){}
 	}
 
 	public function hasResource(){
