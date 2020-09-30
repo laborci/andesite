@@ -56,6 +56,7 @@ class Repository{
 	public function collect(array $ids): array{
 		$objects = [];
 		$ids = array_unique($ids);
+		$originalIds = $ids;
 		$requested = count($ids);
 		if ($requested == 0) return [];
 
@@ -67,12 +68,11 @@ class Repository{
 			}
 		}
 
-
 		$records = [];
 		$ids = array_combine($ids, $ids);
 		if (count($ids)){
-			$m_records = Memcache::Module()->getm(array_map(function ($id) { return 'ghost/' . md5($this->model->ghost . '/' . $id); }, $ids));
-			if(is_array($m_records)){
+			$m_records = Memcache::Module()->getm(array_map(function ($id){ return 'ghost/' . md5($this->model->ghost . '/' . $id); }, $ids));
+			if (is_array($m_records)){
 				array_walk($m_records, function ($record) use (&$ids, &$records){
 					$records[$record['id']] = $record;
 					unset($ids[$record['id']]);
@@ -81,7 +81,7 @@ class Repository{
 		}
 		if (count($ids)){
 			$db_records = $this->dbRepository->collect($ids);
-			array_walk($db_records, function($record){
+			array_walk($db_records, function ($record){
 				Memcache::Module()->set('ghost/' . md5($this->model->ghost . '/' . $record['id']), $record);
 				$records[$record['id']] = $record;
 			});
@@ -90,9 +90,14 @@ class Repository{
 		foreach ($records as $record){
 			$object = $this->newGhost()->compose($record);
 			$this->addToCache($object);
-			$objects[] = $object;
+			$objects[$object->id] = $object;
 		}
-		return $objects;
+
+		$result = [];
+		foreach ($originalIds as $id) if (array_key_exists($id, $objects)){
+			$result[] = $objects[$id];
+		}
+		return $result;
 	}
 
 	protected function newGhost(): Ghost{ return new $this->ghost(); }

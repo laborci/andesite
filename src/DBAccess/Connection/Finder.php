@@ -18,14 +18,20 @@ class Finder{
 	protected $offset;
 	protected $order = [];
 
-	private $cache = false;
+	private $cacheInterval = false;
 
 	public function __construct(PDOConnection $connection){
 		$this->connection = $connection;
 	}
 
 	public function cache($sec){
-		$this->cache = $sec;
+		$this->cacheInterval = $sec;
+		return $this;
+	}
+
+	public function field(string $field, bool $only = true){
+		if ($only) $this->select($field);
+		$this->converter = function ($record) use ($field){return $record[$field];};
 		return $this;
 	}
 
@@ -114,16 +120,14 @@ class Finder{
 
 	public function collect($limit = null, $offset = null): array{
 		$records = $this->collectRecords($limit, $offset);
-		$records = $this->convertRecords($records);
-		return $records;
+		return $this->convertRecords($records);
 	}
 
 	public function pick(){ return $this->convertRecord($this->pickRecord()); }
 
 	public function collectPage($pageSize, $page, &$count = 0): array{
 		$records = $this->collectPageRecords($pageSize, $page, $count);
-		$records = $this->convertRecords($records);
-		return $records;
+		return $this->convertRecords($records);
 	}
 
 	protected function pickRecord(){
@@ -160,17 +164,16 @@ class Finder{
 		$this->offset = $offset;
 		$sql = $this->buildSQL($doCounting);
 
-		if ($this->cache && !$doCounting){
+		if ($this->cacheInterval && !$doCounting){
 			$records = Memcache::Module()->get('finder/' . md5($sql));
 			if (is_array($records)) return $records;
 		}
 
 		$pdostatement = $this->connection->query($sql);
 		$records = $pdostatement->fetchAll($this->connection::FETCH_ASSOC);
-		if ($this->cache && !$doCounting){
-			Memcache::Module()->set('finder/' . md5($sql), $records, $this->cache);
+		if ($this->cacheInterval && !$doCounting){
+			Memcache::Module()->set('finder/' . md5($sql), $records, $this->cacheInterval);
 		}
-
 
 		if ($doCounting){
 			$pdostatement = $this->connection->query('SELECT FOUND_ROWS()');
