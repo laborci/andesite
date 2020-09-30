@@ -81,7 +81,7 @@ class Repository{
 		}
 		if (count($ids)){
 			$db_records = $this->dbRepository->collect($ids);
-			array_walk($db_records, function ($record){
+			array_walk($db_records, function ($record) use(&$records){
 				Memcache::Module()->set('ghost/' . md5($this->model->ghost . '/' . $record['id']), $record);
 				$records[$record['id']] = $record;
 			});
