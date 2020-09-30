@@ -47,9 +47,12 @@ class Repository{
 		return $this->connection->lastInsertId();
 	}
 
-	public function update($record): int{
+	public function update($record, $id=null): int{
 		$data = [];
-		foreach ($record as $key => $value) if ($key != 'id'){
+		if(is_null($id) && !array_key_exists('id', $record)) return false;
+		if(is_null($id)) $id = $record['id'];
+		unset($record['id']);
+		foreach ($record as $key => $value){
 			if (substr($key, 0, 1) === '!'){
 				$key = substr($key, 1);
 			}else{
@@ -57,7 +60,7 @@ class Repository{
 			}
 			$data[] = $this->escapeSQLEntity($key) . '=' . $value;
 		}
-		$sql = 'UPDATE ' . $this->escTable . ' SET ' . implode(', ', $data) . ' WHERE id=' . $this->quoteValue($record['id']);
+		$sql = 'UPDATE ' . $this->escTable . ' SET ' . implode(', ', $data) . ' WHERE id=' . $this->quoteValue($id);
 		return $this->query($sql)->rowCount();
 	}
 

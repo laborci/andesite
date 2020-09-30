@@ -22,11 +22,21 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	use GhostRepositoryFacadeTrait;
 	use GhostAttachmentTrait;
 
+
 	private $deleted;
 	private $attachmentCollections = [];
 	protected ?int $id = null;
+	private static ?Model $model;
 
-	public function getUID():string { return md5(get_called_class().'\\'.$this->id); }
+	const DECOMPOSE_UPDATE = 'update';
+	const DECOMPOSE_INSERT = 'insert';
+
+	public function getGUID(): string{
+		if(is_string($this->getModel()->guid)) return $this->{$this->getModel()->guid};
+		return md5(get_called_class() . '\\' . $this->id);
+	}
+
+	public function getModel(): Model{ return static::$model; }
 
 	public function isExists(): bool{ return (bool)$this->id; }
 	public function isDeleted(): bool{ return $this->deleted; }
@@ -38,14 +48,14 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		$annotations = $reader->getClassAnnotations(get_called_class());
 
 		if (is_null(static::$model)){
-			static::$model = new Model(get_called_class(),$annotations->get('database'), $table = $annotations->get('table'), $annotations->get('storage', $table), $annotations->get('mutable'));
+			static::$model = new Model(get_called_class(), $annotations->get('database'), $table = $annotations->get('table'), $annotations->get('storage', $table), $annotations->get('mutable'));
 			static::model(static::$model);
 			static::extendModel(static::$model);
 		}
 	}
 
-	abstract static protected function extendModel(Model $model):Model;
-	abstract static protected function model(Model $model):Model;
+	abstract static protected function extendModel(Model $model): Model;
+	abstract static protected function model(Model $model): Model;
 
 #region Magic Methods
 
@@ -70,7 +80,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return null;
 	}
 
-	public function __isset(string $name):bool{ return array_key_exists($name, static::$model->getters); }
+	public function __isset(string $name): bool{ return array_key_exists($name, static::$model->getters); }
 
 	public function __set($name, $value){
 		if (array_key_exists($name, static::$model->setters)){
@@ -103,10 +113,18 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $this;
 	}
 
-	public function decompose(){
+	public function decompose($mode = null){
 		$record = [];
 		foreach (static::$model->fields as $fieldName => $field){
-			$record[$fieldName] = $field->decompose($this->$fieldName);
+			if (
+				( $mode === self::DECOMPOSE_INSERT && $field->noInsert === false ) ||
+				( $mode === self::DECOMPOSE_UPDATE && $field->noUpdate === false )
+			){
+				$record[$fieldName] = $field->decompose($this->$fieldName);
+			}
+			if ($mode === self::DECOMPOSE_INSERT && $field->type === Field::TYPE_GUID){
+				$record['!' . $fieldName] = 'uuid()';
+			}
 		}
 		return $record;
 	}
@@ -171,14 +189,14 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $this->id;
 	}
 
-	protected function validators():?ValidatorSet{return null;}
+	protected function validators(): ?ValidatorSet{ return null; }
 
 	/**
 	 * @return \Symfony\Component\Validator\ConstraintViolationList[]
 	 */
 	public function validate($onlymessage = true){
 		$constraints = static::$model->validators->getConstraints();
-		if(!is_null($custom = $this->validators())) $constraints= array_merge_recursive($constraints, $custom->getConstraints());
+		if (!is_null($custom = $this->validators())) $constraints = array_merge_recursive($constraints, $custom->getConstraints());
 		$validator = Validation::createValidator();
 		$errors = [];
 		foreach ($constraints as $field => $constraints){
@@ -195,7 +213,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $errors;
 	}
 
-	static protected function createModel(string $class, string $connection, string $table, bool $mutable = false):Model{return (static::$model = new Model($class, $connection, $table, $mutable));}
+	static protected function createModel(string $class, string $connection, string $table, bool $mutable = false): Model{ return ( static::$model = new Model($class, $connection, $table, $mutable) ); }
 
 #endregion
 

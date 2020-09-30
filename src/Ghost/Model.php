@@ -8,6 +8,7 @@ use Andesite\Attachment\Storage;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\PDOConnection;
 use Andesite\DBAccess\ConnectionFactory;
+use Andesite\Mission\Web\Routing\Exception;
 use Andesite\Util\PropertyList\PropertyListDefinition;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Length;
@@ -29,6 +30,7 @@ use Symfony\Component\Validator\Validation;
  * @property-read array                      $setters
  * @property-read Field[]                    $fields
  * @property-read Relation[]                 $relations
+ * @property-read string|null                $guid
  */
 class Model{
 
@@ -48,6 +50,7 @@ class Model{
 	private array $relations = [];
 	/** @var \Symfony\Component\Validator\Constraint[] */
 	private ValidatorSet $validators;
+	private ?string $guid = null;
 
 	public function __construct(string $ghost, string $connection, string $table, string $storage, $mutable = true){
 		$this->connection = ConnectionFactory::Module()->get($connection);
@@ -79,6 +82,23 @@ class Model{
 		if ($getter !== false) $this->getters[$field] = ['type' => 'virtual', 'method' => $getter];
 		if ($setter !== false) $this->setters[$field] = ['method' => $setter];
 		$this->fields[$field]->protect($getter, $setter);
+		return $this;
+	}
+
+	public function noInsertField(string $field){
+		$this->fields[$field]->noInsert();
+		return $this;
+	}
+	public function noUpdateField(string $field){
+		$this->fields[$field]->noUpdate();
+		return $this;
+	}
+	public function guid(string $field){
+		if (!is_null($this->guid)) throw new \Exception('one guid field allowed');
+		$this->guid = $field;
+		$this->protectField($field);
+		$this->noUpdateField($field);
+		$this->noInsertField($field);
 		return $this;
 	}
 

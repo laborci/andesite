@@ -9,5 +9,5 @@ interface AttachmentOwnerInterface{
 	public function getId():int;
 	public function onAttachmentAdded(Collection $collection, Attachment $attachment);
 	public function onAttachmentRemoved(Collection $collection);
-	public function getUID(): string;
+	public function getGUID(): string;
 }

@@ -2,6 +2,19 @@
 
 use Valentine\Date;
 
+
+/**
+ * Class Field
+ *
+ * @property-read string $name
+ * @property-read string $type
+ * @property-read bool   $protected
+ * @property-read        $getter
+ * @property-read        $setter
+ * @property-read        $options
+ * @property-read bool   $noInsert
+ * @property-read bool   $noUpdate
+ */
 class Field{
 
 	const TYPE_BOOL = 'BOOL';
@@ -15,15 +28,16 @@ class Field{
 	const TYPE_FLOAT = 'FLOAT';
 	const TYPE_JSON = 'JSON';
 	const TYPE_TIME = 'TIME';
+	const TYPE_GUID = 'GUID';
 
-	public $name;
-	public $type;
-	public $protected = false;
-	public $getter = null;
-	public $setter = null;
-	public $options;
-	public $noInsert = false;
-	public $noUpdate = false;
+	private string $name;
+	private string $type;
+	private bool $protected = false;
+	private $getter = null;
+	private $setter = null;
+	private $options;
+	private bool $noInsert = false;
+	private bool $noUpdate = false;
 
 	public function __construct($name, $type, $options = null){
 		$this->name = $name;
@@ -31,9 +45,13 @@ class Field{
 		$this->options = $options;
 	}
 
-	public function __toString(){
-		return $this->name;
-	}
+	public function __get($key){ if (property_exists($this, $key)) return $this->$key; }
+
+	public function __toString(){ return $this->name; }
+
+	public function noInsert(){ $this->noInsert = true; }
+
+	public function noUpdate(){ $this->noUpdate = true; }
 
 	public function protect($getter, $setter){
 		$this->protected = true;

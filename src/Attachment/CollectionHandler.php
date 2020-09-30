@@ -35,7 +35,7 @@ class CollectionHandler{
 		$this->repo = $storage->dbRepository;
 		$this->thumbnailConfig = $storage->thumbnailConfig;
 		$this->memcache = Memcache::Module();
-		$this->memcacheKey = 'attachment/' . $this->owner->getUID() . '/' . $this->category->name;
+		$this->memcacheKey = 'attachment/' . $this->owner->getGUID() . '/' . $this->category->name;
 
 		$this->ownerId = $owner->getId();
 		$itemPath = ( function ($id){

@@ -69,9 +69,9 @@ class GhostGenerator{
 		$this->style->writeln("Generate Entity ");
 
 		$files = [
-			"ghost.txt"       => "{$ghostPath}/{$name}.php",
+			"ghost.txt"  => "{$ghostPath}/{$name}.php",
 			"shadow.txt" => "{$shadowPath}/__{$name}.php",
-			"finder.txt"      => "{$finderPath}/__{$name}.php",
+			"finder.txt" => "{$finderPath}/__{$name}.php",
 		];
 
 		foreach ($files as $templateFile => $file){
@@ -108,7 +108,7 @@ class GhostGenerator{
 			$fieldsdefinitions = $this->fetch($model);
 			$this->updateShadow($model, $fieldsdefinitions);
 
-			if(count($model->attachmentStorage->categories)) $model->attachmentStorage->initialize();
+			if (count($model->attachmentStorage->categories)) $model->attachmentStorage->initialize();
 		}
 		$this->style->success('done.');
 	}
@@ -130,7 +130,7 @@ class GhostGenerator{
 				'options'    => $f->options,
 				'validators' => [],
 			];
-			foreach ($f->validators as $validator) {
+			foreach ($f->validators as $validator){
 				$fieldsdefinition['validators'][] = [
 					'name'    => $f->name,
 					'type'    => $validator[0],
@@ -150,7 +150,7 @@ class GhostGenerator{
 	}
 
 	protected function updateShadow(Model $model, $fielddefinition){
-		$name = (new ReflectionClass($model->ghost))->getShortName();
+		$name = ( new ReflectionClass($model->ghost) )->getShortName();
 
 		$this->style->writeln("- Updating $name shadow");
 
@@ -164,11 +164,12 @@ class GhostGenerator{
 			Field::TYPE_ENUM     => 'string',
 			Field::TYPE_SET      => 'array',
 			Field::TYPE_STRING   => 'string',
+			Field::TYPE_GUID     => 'string',
 			Field::TYPE_INT      => 'int',
 			Field::TYPE_ID       => 'int',
 			Field::TYPE_FLOAT    => 'float',
 		];
-		$protectIdField = "\t\t\t->protectField('id')";
+		$protectIdField = "\t\t\t->protectField('id')\n\t\t\t->noInsertField('id')\n\t\t\t->noUpdateField('id')";
 		$fieldAdditions = [];
 		$fieldValidators = [];
 		$fields = [];
@@ -183,6 +184,7 @@ class GhostGenerator{
 
 		foreach ($fielddefinition as $field){
 			$fieldAdditions[] = "\t\t\t" . '->addField("' . $field['name'] . '", Field::TYPE_' . $field['type'] . ', ' . $encoder->encode($field['options'], ['whitespace' => false]) . ')';
+			if($field['type'] === Field::TYPE_GUID) $protectIdField .="\n\t\t\t->guid('".$field['name']."')";
 		}
 		foreach ($fielddefinition as $field) foreach ($field['validators'] as $validator){
 			$fieldValidators[] = "\t\t\t" . '->addValidator("' . $field['name'] . '", new \\' . $validator['type'] . '(' . ( is_null($validator['options']) ? '' : $encoder->encode($validator['options'], ['whitespace' => false]) ) . '))';
@@ -216,10 +218,10 @@ class GhostGenerator{
 
 		foreach ($model->virtuals as $field){
 			if (strpos($field['type'], '\\') !== false) $field['type'] = '\\' . trim($field['type'], '\\');
-			if($field['type']) $field['type'] .= ' ';
+			if ($field['type']) $field['type'] .= ' ';
 			if ($field['setter'] !== false && $field['getter'] !== false) $virtuals[] = " * @property " . $field['type'] . "$" . $field['name'];
-			elseif ($field['getter'] !== false)	$virtuals[] = " * @property-read " . $field['type'] . "$" . $field['name'];
-			elseif ($field['setter'] !== false)	$virtuals[] = " * @property-write " . $field['type'] . "$" . $field['name'];
+			elseif ($field['getter'] !== false) $virtuals[] = " * @property-read " . $field['type'] . "$" . $field['name'];
+			elseif ($field['setter'] !== false) $virtuals[] = " * @property-write " . $field['type'] . "$" . $field['name'];
 			if (is_string($field['getter'])) $abstracts[] = "\t" . 'abstract protected function ' . $field['getter'] . '()' . ( $field['type'] ? ':' . $field['type'] : '' ) . ';';
 			if (is_string($field['setter'])) $abstracts[] = "\t" . 'abstract protected function ' . $field['setter'] . '(' . $field['type'] . '$value);';
 		}
@@ -259,6 +261,6 @@ class GhostGenerator{
 
 		$shadowPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($shadowNamespace));
 
-		file_put_contents(		$shadowPath.'/__'.$name.'.php', $template);
+		file_put_contents($shadowPath . '/__' . $name . '.php', $template);
 	}
 }

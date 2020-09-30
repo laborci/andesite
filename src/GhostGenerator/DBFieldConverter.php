@@ -59,6 +59,7 @@ class DBFieldConverter{
 				$validators[] = [Instance::class, \DateTime::class];
 				break;
 			case Field::TYPE_STRING:
+			case Field::TYPE_GUID:
 				$validators[] = [Type::class, 'string'];
 				$validators[] = [Length::class, ['max' => $this->maxlength]];
 				break;
@@ -112,6 +113,7 @@ class DBFieldConverter{
 	public function getFieldType($descriptor): string{
 
 		if (strpos($descriptor['COLUMN_COMMENT'], 'json') !== false) return Field::TYPE_JSON;
+		if (strpos($descriptor['COLUMN_COMMENT'], 'guid') !== false) return Field::TYPE_GUID;
 		if ($descriptor['COLUMN_TYPE'] == 'tinyint(1)') return Field::TYPE_BOOL;
 		if (strpos($descriptor['COLUMN_TYPE'], 'int(11) unsigned') === 0 && (
 				substr($descriptor['COLUMN_NAME'], -2) == 'Id' ||

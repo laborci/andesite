@@ -81,7 +81,7 @@ class Repository{
 		}
 		if (count($ids)){
 			$db_records = $this->dbRepository->collect($ids);
-			array_walk($db_records, function ($record) use(&$records){
+			array_walk($db_records, function ($record) use (&$records){
 				Memcache::Module()->set('ghost/' . md5($this->model->ghost . '/' . $record['id']), $record);
 				$records[$record['id']] = $record;
 			});
@@ -105,14 +105,14 @@ class Repository{
 	protected function count(Filter $filter = null){ return $this->dbRepository->count($filter); }
 
 	public function insert(Ghost $object){
-		$record = $object->decompose();
+		$record = $object->decompose(Ghost::DECOMPOSE_INSERT);
 		return $this->dbRepository->insert($record);
 	}
 
 	public function update(Ghost $object){
-		$record = $object->decompose();
+		$record = $object->decompose(Ghost::DECOMPOSE_UPDATE);
 		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->id));
-		return $this->dbRepository->update($record);
+		return $this->dbRepository->update($record, $object->id);
 	}
 
 	public function delete(int $id){
