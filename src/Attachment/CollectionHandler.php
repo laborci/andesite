@@ -3,6 +3,7 @@
 use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
 use Andesite\DBAccess\Connection\Filter\Filter;
 use Andesite\DBAccess\Connection\Repository;
+use Andesite\Util\Memcache\Memcache;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -23,6 +24,9 @@ class CollectionHandler{
 	private string $path;
 	private string $url;
 
+	private ?Memcache $memcache;
+	private string $memcacheKey;
+
 	public function __construct(Collection $collection, Storage $storage, Category $category, AttachmentOwnerInterface $owner){
 		$this->collection = $collection;
 		$this->storage = $storage;
@@ -30,6 +34,8 @@ class CollectionHandler{
 		$this->owner = $owner;
 		$this->repo = $storage->dbRepository;
 		$this->thumbnailConfig = $storage->thumbnailConfig;
+		$this->memcache = Memcache::Module();
+		$this->memcacheKey = 'attachment/' . $this->owner->getUID() . '/' . $this->category->name;
 
 		$this->ownerId = $owner->getId();
 		$itemPath = ( function ($id){
@@ -68,6 +74,8 @@ class CollectionHandler{
 
 		$this->reorder();
 
+		$this->memcache->del($this->memcacheKey);
+
 		return $this->get($file->getFilename());
 	}
 
@@ -78,6 +86,9 @@ class CollectionHandler{
 				->and('filename=$1', $attachment->filename)
 		)->count();
 		if ($count === 0) unlink($this->path . $attachment->filename);
+
+		$this->memcache->del($this->memcacheKey);
+
 	}
 
 	public function get(string $filename): ?Attachment{
@@ -91,11 +102,16 @@ class CollectionHandler{
 	}
 
 	public function all(): array{
+
 		$attachments = [];
-		$records = $this->repo->search(
-			Filter::where("category=$1", $this->category->name)
-				->and('ownerId=$1', $this->ownerId)
-		)->order("sequence ASC")->collect();
+		$records = $this->memcache->get($this->memcacheKey);
+		if($records === false){
+			$records = $this->repo->search(
+				Filter::where("category=$1", $this->category->name)
+					->and('ownerId=$1', $this->ownerId)
+			)->order("sequence ASC")->collect();
+			$this->memcache->set($this->memcacheKey, $records);
+		}
 		foreach ($records as $record) $attachments[] = $this->createAttachment($record);
 		return $attachments;
 	}
@@ -115,6 +131,7 @@ class CollectionHandler{
 				WHERE id=" . $attachment->id . "
 			");
 		$this->reorder();
+		$this->memcache->del($this->memcacheKey);
 	}
 
 	public function saveAttachment(Attachment $attachment){
@@ -125,8 +142,8 @@ class CollectionHandler{
 					'filename' => $attachment->filename,
 					'meta'     => json_encode($attachment->meta),
 				]);
-
 		}
+		$this->memcache->del($this->memcacheKey);
 	}
 
 	protected function createAttachment(?array $record): ?Attachment{

@@ -7,6 +7,7 @@ use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\ConnectionFactory;
 use Andesite\Mission\Web\Routing\Router;
 use Andesite\Util\CodeFinder\CodeFinder;
+use Andesite\Util\Memcache\Memcache;
 use Composer\Autoload\ClassLoader;
 use Minime\Annotations\Reader;
 use ReflectionClass;
@@ -33,7 +34,7 @@ class GhostManager extends Module{
 		$this->attachmentConfig = $config['attachment-config'];
 	}
 
-	protected function load(ConnectionFactory $factory){
+	protected function load(ConnectionFactory $factory, Memcache $memcache){
 		$this->attachmentRepository = new \Andesite\Attachment\Repository($this->attachmentConfig);
 		spl_autoload_register (function ($class){
 			if(file_exists($file = $this->classLoader->findFile($class))){

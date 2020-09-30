@@ -4,6 +4,7 @@ use Andesite\Attachment\Attachment;
 use Andesite\Attachment\Collection;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Ghost\Exception\ValidationError;
+use Andesite\Util\Memcache\Memcache;
 use JsonSerializable;
 use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
 use Andesite\Ghost\Exception\InsufficientData;
@@ -24,6 +25,8 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	private $deleted;
 	private $attachmentCollections = [];
 	protected ?int $id = null;
+
+	public function getUID():string { return md5(get_called_class().'\\'.$this->id); }
 
 	public function isExists(): bool{ return (bool)$this->id; }
 	public function isDeleted(): bool{ return $this->deleted; }
