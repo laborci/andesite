@@ -25,7 +25,7 @@ class ThumbnailResponder extends PageResponder{
 		$ext = array_pop($parts);
 		$hash = array_pop($parts);
 		$pathId = array_pop($parts);
-		if ($ext == 'jpg'){
+		if ($ext === 'jpg' || $ext === 'webp'){
 			$jpegquality = array_pop($parts);
 		}else{
 			$jpegquality = null;
@@ -98,6 +98,10 @@ class ThumbnailResponder extends PageResponder{
 			case 'png':
 				imagesavealpha($this->img, true);
 				ImagePng($this->img, $this->target);
+				break;
+			case 'webp':
+				$jpegquality = base_convert($jpegquality, 32, 10) * 4;
+				imagewebp($this->img, $this->target, $jpegquality);
 				break;
 		}
 

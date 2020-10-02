@@ -12,7 +12,7 @@ class Memcache extends Module{
 	protected ?Memcached $memcache = null;
 
 	public function run($config){
-		if ($config['allowed']){
+		if ($config['allowed'] && class_exists(Memcached::class)){
 			$this->memcache = new Memcached();
 			$this->memcache->addServer($config['server']['host'], $config['server']['port']);
 			$this->memcache->setOption(Memcached::OPT_PREFIX_KEY, $config['prefix']);

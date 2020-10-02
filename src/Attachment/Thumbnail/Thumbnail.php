@@ -133,6 +133,7 @@ class Thumbnail{
 	public function exportGif():string { return $this->thumbnail('gif'); }
 
 	public function exportPng():string { return $this->thumbnail('png'); }
+	public function exportWebp():string { return $this->thumbnail('webp'); }
 
 	public function exportJpg(int $quality = null):string {
 		if(!is_null($quality)) $this->jpegQuality = $quality;
@@ -150,7 +151,7 @@ class Thumbnail{
 
 	protected function thumbnail(string $ext): string{
 		$op = $this->operation;
-		if ($ext == 'jpg'){
+		if ($ext === 'jpg' || $ext === 'webp'){
 			if ($this->jpegQuality < 0)
 				$this->jpegQuality = 0;
 			if ($this->jpegQuality > 100)
@@ -175,6 +176,12 @@ class Thumbnail{
 			case 'jpg':
 				return $this->exportJpg();
 				break;
+			case 'jpg':
+				return $this->exportJpg();
+				break;
+			case 'webp':
+				return $this->exportWebp();
+				break;
 			case 'url':
 				return $this->export();
 				break;
@@ -183,6 +190,6 @@ class Thumbnail{
 	}
 
 	public function __isset($name){
-		return in_array($name, ['png', 'gif', 'jpg', 'url']);
+		return in_array($name, ['png', 'gif', 'jpg', 'webp', 'url']);
 	}
 }

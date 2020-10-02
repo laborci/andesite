@@ -5,6 +5,7 @@ use Andesite\Attachment\Collection;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Ghost\Exception\ValidationError;
 use Andesite\Util\Memcache\Memcache;
+use Application\Ghost\Article;
 use JsonSerializable;
 use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
 use Andesite\Ghost\Exception\InsufficientData;

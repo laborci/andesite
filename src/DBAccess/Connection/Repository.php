@@ -18,7 +18,10 @@ class Repository{
 	}
 
 	public function search(Filter $filter = null): Finder{ return $this->connection->createFinder()->select($this->escTable . '.*')->from($this->escTable)->where($filter); }
-	public function pick(int $id){ return $this->search(Filter::where('id = $1', $id))->pick(); }
+	public function pick($id){
+		if(is_numeric($id)) return $this->search(Filter::where('id = $1', $id))->pick();
+		else return $this->search(Filter::where('guid = $1', $id))->pick();
+	}
 	public function collect(array $ids){ return $this->search(Filter::where('id IN ($1)', $ids))->collect(); }
 	public function count(Filter $filter = null){ return $this->connection->createFinder()->from($this->escTable)->where($filter)->count(); }
 	public function save($record){ return $record['id'] ? $this->update($record) : $this->insert($record); }
