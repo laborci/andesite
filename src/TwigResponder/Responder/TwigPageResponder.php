@@ -27,5 +27,6 @@ abstract class TwigPageResponder extends PageResponder{
 			$this->getDataBag()->set($key, $value);
 		}else $this->getDataBag()->set($name, $value);
 	}
+	protected function get($key){return $this->getDataBag()->get($key);}
 
 }

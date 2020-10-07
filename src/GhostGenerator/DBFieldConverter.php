@@ -45,7 +45,7 @@ class DBFieldConverter{
 
 		$validators = [];
 
-		if (!$this->nullable && !$this->primary) $validators[] = [NotNull::class];
+		if (!$this->nullable && !$this->primary && $this->fieldType !== Field::TYPE_GUID) $validators[] = [NotNull::class];
 
 		switch ($this->fieldType){
 			case Field::TYPE_BOOL:

@@ -23,13 +23,15 @@ class CodexHelperGenerator{
 
 		$namespace = $config['namespace'];
 		$ghosts = GhostManager::Module()->getGhosts();
+		dump($ghosts);
 
-		foreach ($ghosts as  $ghost) if(class_exists($ghost['class'])){
+		foreach ($ghosts as  $ghost) if(class_exists($ghost)){
 
-			$class = $namespace . '\\Cxh_' . $ghost['name'];
-			$ghostClass = $ghost['class'];
+			$name = (new \ReflectionClass($ghost))->getShortName();
+
+			$class = $namespace . '\\Cxh_' . $name;
 			/** @var Model $model */
-			$model = $ghostClass::$model;
+			$model = $ghost::$model;
 
 			// READ EXISTING ANNOTATIONS as TRANSLATIONS
 			$translations = new Translation();
@@ -43,7 +45,7 @@ class CodexHelperGenerator{
 			/** @var Field[] $fields */
 			$fields = [];
 			foreach ($model->fields as $field) $fields[] = new Field('field', $field->name, $field->options, $translations);
-			foreach ($model->getAttachmentStorage()->getCategories() as $category) $fields[] = new Field('attachment', $category->getName(), [], $translations);
+			foreach ($model->attachmentStorage->categories as $category) $fields[] = new Field('attachment', $category->name, [], $translations);
 
 			$fieldCollection = [];
 			$fieldConstructorCollection = [];
@@ -56,14 +58,14 @@ class CodexHelperGenerator{
 
 			$template = file_get_contents(__DIR__ . '/@resource/helper.txt');
 
-			$template = str_replace('{{name}}', $ghost['name'], $template);
+			$template = str_replace('{{name}}', $name, $template);
 			$template = str_replace('{{namespace}}', $namespace, $template);
-			$template = str_replace('{{ghost}}', $ghost['class'], $template);
+			$template = str_replace('{{ghost}}', $ghost, $template);
 			$template = str_replace('{{fields}}', join("\n", $fieldCollection), $template);
 			$template = str_replace('{{fieldConstructors}}', join("\n", $fieldConstructorCollection), $template);
 			$template = str_replace('{{annotations}}', join("\n", $annotationCollection), $template);
 
-			$filename = CodeFinder::Service()->Psr4ResolveClass($namespace . '\\Cxh_' . $ghost['name']);
+			$filename = CodeFinder::Service()->Psr4ResolveClass($namespace . '\\Cxh_' . $name);
 			file_put_contents($filename, $template);
 
 			$style->writeln(realpath($filename).' done.');

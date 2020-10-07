@@ -49,7 +49,7 @@ class ApiManager extends Segment{
 				}
 			}
 
-			if(array_key_exists($key = strtolower($httpMethod.':'.$methodCandidate), $map)){
+			if(array_key_exists($key = strtolower($httpMethod).':'.$methodCandidate, $map)){
 				$method = $map[$key];
 				array_shift($params);
 			}elseif(array_key_exists($httpMethod, $onMap)){
