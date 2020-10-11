@@ -18,7 +18,6 @@ use Andesite\Ghost\Model;
 abstract class __{{name}} extends Ghost{
 
 	public static ?Model $model = null;
-	public static function __callStatic($name, $arguments){ if (in_array($name, static::$model->fields)) return new Comparison($name); }
 
 # abstracts
 

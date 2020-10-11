@@ -195,7 +195,7 @@ class GhostGenerator{
 
 			$fieldConstants[] = "\t" . 'const ' . $field->name . ' = "' . $field->name . '";';
 
-			$comparators[] = ' * @method static Comparison ' . $field->name . '()';
+			$comparators[] = ' * @method static Comparison ' . $field->name . '($isin = null)';
 
 			if (is_array($field->options)){
 				foreach ($field->options as $option){

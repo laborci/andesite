@@ -3,6 +3,7 @@
 use Andesite\Attachment\Attachment;
 use Andesite\Attachment\Collection;
 use Andesite\Core\ServiceManager\ServiceContainer;
+use Andesite\DBAccess\Connection\Filter\Comparison;
 use Andesite\Ghost\Exception\ValidationError;
 use Andesite\Util\Memcache\Memcache;
 use Application\Ghost\Article;
@@ -98,6 +99,17 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		}
 		return null;
 	}
+
+	public static function __callStatic($name, $arguments){
+		if (in_array($name, static::$model->fields)){
+			$comparison = new Comparison($name);
+			if(array_key_exists(0, $arguments) && !is_null($arguments[0])){
+				$comparison->inin($arguments[0]);
+			}
+			return $comparison;
+		}
+	}
+
 
 #endregion
 
