@@ -104,7 +104,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		if (in_array($name, static::$model->fields)){
 			$comparison = new Comparison($name);
 			if(array_key_exists(0, $arguments) && !is_null($arguments[0])){
-				$comparison->inin($arguments[0]);
+				$comparison->isin($arguments[0]);
 			}
 			return $comparison;
 		}

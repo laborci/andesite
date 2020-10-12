@@ -1,6 +1,7 @@
 <?php namespace Andesite\Auth\RoleManager;
 
 use Andesite\Core\Module\Module;
+use Andesite\Ghost\Ghost;
 
 
 class RoleManager extends Module{
