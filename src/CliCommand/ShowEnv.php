@@ -3,6 +3,8 @@
 use Andesite\Core\Env\Env;
 use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
+use Andesite\Mission\Cli\Command\Cmd;
+use Andesite\Mission\Cli\Command\CommandModule;
 use Andesite\Mission\Cli\ConsoleTree;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -10,20 +12,18 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class ShowEnv extends CliModule{
-
-	protected function createCommand($config): Command{
-		return new class( $config, 'env', null, 'Generates and shows the current env' ) extends CliCommand{
-
-			protected function configure(){
-				$this->addArgument('key', InputArgument::OPTIONAL);
-			}
-
-			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
+class ShowEnv extends CommandModule{
+	/**
+	 * @command       env
+	 * @description   Generates and shows the current env
+	 */
+	public function env(): Cmd{
+		return ( new class extends Cmd{
+			public function __invoke(){
 				Env::Service()->reload(true);
-				if ($input->getArgument('key')){
-					$env = Env::Service()->get($input->getArgument('key'));
-					$root = $input->getArgument('key');
+				if ($this->input->getArgument('key')){
+					$env = Env::Service()->get($this->input->getArgument('key'));
+					$root = $this->input->getArgument('key');
 				}else{
 					$env = Env::Service()->get();
 					$root = 'env';
@@ -31,13 +31,11 @@ class ShowEnv extends CliModule{
 				if (is_array($env)){
 					$arr = array_filter($env, function ($key){ return strpos($key, '.') === false; }, ARRAY_FILTER_USE_KEY);
 					ksort($arr);
-					ConsoleTree::draw($arr, $style, $root);
+					ConsoleTree::draw($arr, $this->style, $root);
 				}else{
-					$style->success($env);
+					$this->style->success($env);
 				}
 			}
-		};
+		} )->addArgument('key', InputArgument::OPTIONAL);
 	}
-
 }
-

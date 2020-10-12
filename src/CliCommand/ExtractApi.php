@@ -3,6 +3,8 @@
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
+use Andesite\Mission\Cli\Command\Cmd;
+use Andesite\Mission\Cli\Command\CommandModule;
 use Andesite\Util\CodeFinder\CodeFinder;
 use Andesite\Util\DotArray\Dot;
 use CaseHelper\CaseHelperFactory;
@@ -12,16 +14,17 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class ExtractApi extends CliModule{
+class ExtractApi extends CommandModule{
 
-	protected function createCommand($config): Command{
-
-		return new class( $config, 'api:generate', 'api', 'Extract web api-s to js') extends CliCommand{
-
-			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
-				$apis = $config;
-				foreach ($apis as $api) if (!empty($api['extract'])) $this->extract($api);
-				$style->success('done');
+	/**
+	 * @command       api
+	 * @description   Extract web api-s to js
+	 */
+	public function env(): Cmd{
+		return ( new class extends Cmd{
+			public function __invoke(){
+				foreach ($this->config as $api) if (!empty($api['extract'])) $this->extract($api);
+				$this->style->success('done');
 			}
 
 			protected function extract($api){
@@ -99,7 +102,6 @@ class ExtractApi extends CliModule{
 					file_put_contents($file, $output);
 				}
 			}
-		};
+		} );
 	}
-
 }

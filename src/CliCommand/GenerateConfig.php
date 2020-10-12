@@ -3,6 +3,8 @@
 use Andesite\Core\Env\Env;
 use Andesite\Mission\Cli\CliCommand;
 use Andesite\Mission\Cli\CliModule;
+use Andesite\Mission\Cli\Command\Cmd;
+use Andesite\Mission\Cli\Command\CommandModule;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -11,13 +13,19 @@ use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
 
-class GenerateConfig extends CliModule{
 
-	protected function createCommand($config): Command{
-		return new class( $config, 'config', 'vhost', 'Generates virtualhost and other configs' ) extends CliCommand{
+class GenerateConfig extends CommandModule{
 
-			protected function runCommand(SymfonyStyle $style, InputInterface $input, OutputInterface $output, $config){
+	/**
+	 * @command       config
+	 * @alias         vhost
+	 * @description   Generates virtualhost and other configs
+	 */
+	public function env(): Cmd{
+		return ( new class extends Cmd{
+			public function __invoke(){
 
+				$config = $this->config;
 				$env = Env::Service();
 				$loader = new FilesystemLoader();
 				$twig = new Environment($loader);
@@ -40,10 +48,9 @@ class GenerateConfig extends CliModule{
 					$output = join("\n", $formattedLines);
 
 					file_put_contents($outfile, $output);
-					$style->success($template . ' Done');
+					$this->style->success($template . ' Done');
 				}
 			}
-		};
+		} );
 	}
-
 }
