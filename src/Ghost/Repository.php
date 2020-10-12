@@ -63,10 +63,11 @@ class Repository{
 		foreach ($ids as $index => $id){
 			$cached = $this->cache->get($id);
 			if (!is_null($cached)){
-				$objects[] = $cached;
+				$objects[$id] = $cached;
 				unset($ids[$index]);
 			}
 		}
+
 
 		$records = [];
 		$ids = array_combine($ids, $ids);
@@ -79,6 +80,7 @@ class Repository{
 				});
 			}
 		}
+
 		if (count($ids)){
 			$db_records = $this->dbRepository->collect($ids);
 			array_walk($db_records, function ($record) use (&$records){
@@ -92,6 +94,7 @@ class Repository{
 			$this->addToCache($object);
 			$objects[$object->id] = $object;
 		}
+		dump($objects);
 
 		$result = [];
 		foreach ($originalIds as $id) if (array_key_exists($id, $objects)){
