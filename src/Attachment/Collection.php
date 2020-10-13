@@ -39,6 +39,17 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
 		$this->owner->onAttachmentRemoved($this);
 	}
 
+	/**
+	 * @param callable $filter
+	 * @return Attachment[]
+	 */
+	public function filter(callable $filter):array{
+		$this->lazyLoad();
+		$result = [];
+		foreach ($this->attachments as $attachment) if($filter($attachment)) $result[] = $filter;
+		return $result;
+	}
+
 	// Loading collection
 
 	protected function lazyLoad(): bool{ return ( !is_null($this->attachments) ?: $this->load() ) && false; }
