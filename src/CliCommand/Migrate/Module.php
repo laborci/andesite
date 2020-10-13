@@ -4,6 +4,8 @@ use Andesite\DBAccess\ConnectionFactory;
 use Andesite\Mission\Cli\CliCommandModule;
 use Andesite\Mission\Cli\Command\Cmd;
 use Andesite\Mission\Cli\Command\CommandModule;
+use Camcima\MySqlDiff\RegExpPattern;
+use Minime\Annotations\Reader;
 use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -12,6 +14,14 @@ use Symfony\Component\Console\Input\InputOption;
  * @command-group mig
  */
 class Module extends CommandModule{
+
+	public function __construct(Reader $reader){
+		parent::__construct($reader);
+		$ref = new \ReflectionClass(RegExpPattern::class);
+		$regex = $ref->getStaticPropertyValue('columnTypeRegExps');
+		$regex[] = 'json';
+		$ref->setStaticPropertyValue('columnTypeRegExps', $regex);
+	}
 
 	/**
 	 * @description Check the migration status
