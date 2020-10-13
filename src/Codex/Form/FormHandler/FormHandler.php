@@ -6,6 +6,7 @@ use Andesite\Codex\Form\Field;
 use Andesite\Codex\Interfaces\ItemConverterInterface;
 use Andesite\Codex\Interfaces\ItemDataImporterInterface;
 
+
 class FormHandler implements JsonSerializable{
 
 	/** @var AdminDescriptor */
@@ -25,6 +26,7 @@ class FormHandler implements JsonSerializable{
 	protected $sections;
 
 	protected $onSave = null;
+	protected $beforeSave = null;
 
 	protected $JSplugins = [];
 	protected $labelField = null;
@@ -51,6 +53,7 @@ class FormHandler implements JsonSerializable{
 	public function setItemDataImporter(ItemDataImporterInterface $itemDataImporter){ $this->itemDataImporter = $itemDataImporter; }
 
 	public function setOnSave(callable $function){ $this->onSave = $function; }
+	public function setBeforeSave(callable $function){ $this->beforeSave = $function; }
 
 	public function section($label){
 		$section = new FormSection($label, $this->admin);
@@ -88,6 +91,10 @@ class FormHandler implements JsonSerializable{
 	}
 
 	public function save($id, $data){
+
+		if (!is_null($this->beforeSave)){
+			$data = ( $this->beforeSave )($data);
+		}
 		if (is_numeric($id) && $id > 0){
 			$newid = $this->dataProvider->updateItem($id, $data, $this->itemDataImporter);
 		}else{

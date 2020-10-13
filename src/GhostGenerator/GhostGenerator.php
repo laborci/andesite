@@ -231,6 +231,10 @@ class GhostGenerator{
 				case Relation::TYPE_BELONGSTO:
 					$relations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . ' $' . $relation->name;
 					break;
+				case Relation::TYPE_BELONGSTOMANY:
+					$relations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . '[] $' . $relation->name;
+					$relations[] = ' * @method \\' . $relation->descriptor['ghost'] . '[] ' . $relation->name . '()';
+					break;
 				case Relation::TYPE_HASMANY:
 					$relations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . '[] $' . $relation->name;
 					$relations[] = ' * @method \\' . $relation->descriptor['ghost'] . '[] ' . $relation->name . '($order = null, $limit = null, $offset = null)';

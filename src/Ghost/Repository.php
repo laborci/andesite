@@ -94,7 +94,6 @@ class Repository{
 			$this->addToCache($object);
 			$objects[$object->id] = $object;
 		}
-		dump($objects);
 
 		$result = [];
 		foreach ($originalIds as $id) if (array_key_exists($id, $objects)){

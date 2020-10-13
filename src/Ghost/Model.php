@@ -129,6 +129,13 @@ class Model{
 		return $this;
 	}
 
+	public function belongsToMany(string $target, string $ghost, ?string $field = null): Model{
+		if ($field === null) $field = $target . 'Ids';
+		$this->getters[$target] = ['type' => 'relation'];
+		$this->relations[$target] = new Relation($target, Relation::TYPE_BELONGSTOMANY, ['ghost' => $ghost, 'field' => $field]);
+		return $this;
+	}
+
 	public function addField(string $name, string $type, $data = null): Model{
 		$this->fields[$name] = new Field($name, $type, $data);
 		return $this;
