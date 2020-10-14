@@ -17,10 +17,10 @@ class Module extends CommandModule{
 
 	public function __construct(Reader $reader){
 		parent::__construct($reader);
-		$ref = new \ReflectionClass(RegExpPattern::class);
-		$regex = $ref->getStaticPropertyValue('columnTypeRegExps');
-		$regex[] = 'json';
-		$ref->setStaticPropertyValue('columnTypeRegExps', $regex);
+//		$ref = new \ReflectionClass(RegExpPattern::class);
+//		$regex = $ref->getStaticPropertyValue('columnTypeRegExps');
+//		$regex[] = 'json';
+//		$ref->setStaticPropertyValue('columnTypeRegExps', $regex);
 	}
 
 	/**
