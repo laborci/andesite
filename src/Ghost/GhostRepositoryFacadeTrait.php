@@ -13,8 +13,8 @@ trait GhostRepositoryFacadeTrait{
 	}
 
 	/** @return self */
-	static final public function pick($id): ?self{
-		return static::$model->repository->pick($id);
+	static final public function pick($id, $useCache=true): ?self{
+		return static::$model->repository->pick($id, $useCache);
 	}
 
 	/** @return self[] */

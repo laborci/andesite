@@ -34,7 +34,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	const DECOMPOSE_INSERT = 'insert';
 
 	public function getGUID(): string{
-		if(is_string($this->getModel()->guid)) return $this->{$this->getModel()->guid};
+		if (is_string($this->getModel()->guid)) return $this->{$this->getModel()->guid};
 		return md5(get_called_class() . '\\' . $this->id);
 	}
 
@@ -103,7 +103,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	public static function __callStatic($name, $arguments){
 		if (in_array($name, static::$model->fields)){
 			$comparison = new Comparison($name);
-			if(array_key_exists(0, $arguments) && !is_null($arguments[0])){
+			if (array_key_exists(0, $arguments) && !is_null($arguments[0])){
 				$comparison->isin($arguments[0]);
 			}
 			return $comparison;
@@ -198,6 +198,11 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
 		$this->id = static::$model->repository->insert($this);
+		if (!is_null(static::$model->guid)){
+			$guid = static::$model->guid;
+			$record = static::$model->repository->getDbRepository()->pick($this->id);
+			$this->$guid = $record[$guid];
+		}
 		$this->onAfterInsert();
 		return $this->id;
 	}
