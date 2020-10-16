@@ -31,7 +31,7 @@ abstract class __{{name}} extends Ghost{
 		return $model
 # field-additions
 # field-validators
-# protect-id-field
+# protect-fields
 		;
 	}
 }

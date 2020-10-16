@@ -30,6 +30,10 @@ class Field{
 	const TYPE_TIME = 'TIME';
 	const TYPE_GUID = 'GUID';
 
+	const VIRTUAL = 1;
+	const VIRTUAL_INSERT_RELOAD = 2;
+	const VIRTUAL_UPDATE_RELOAD = 4;
+
 	private string $name;
 	private string $type;
 	private bool $protected = false;

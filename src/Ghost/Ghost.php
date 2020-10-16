@@ -189,6 +189,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
 		static::$model->repository->update($this);
+		$this->reload(static::$model->reloadOnUpdate);
 		$this->onAfterUpdate();
 		return $this->id;
 	}
@@ -197,14 +198,16 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		if ($this->onBeforeInsert() === false) return false;
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
-		$this->id = static::$model->repository->insert($this);
-		if (!is_null(static::$model->guid)){
-			$guid = static::$model->guid;
-			$record = static::$model->repository->getDbRepository()->pick($this->id);
-			$this->$guid = $record[$guid];
-		}
+		$this->reload(static::$model->reloadOnInsert);
 		$this->onAfterInsert();
 		return $this->id;
+	}
+
+	private function reload($fields){
+		foreach($fields as $field){
+			$record = static::$model->repository->getDbRepository()->pick($this->id);
+			$this->$guid = static::$model->fields[$field]->compose($record[$field]);
+		}
 	}
 
 	protected function validators(): ?ValidatorSet{ return null; }

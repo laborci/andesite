@@ -129,6 +129,7 @@ class GhostGenerator{
 				'type'       => $f->fieldType,
 				'options'    => $f->options,
 				'validators' => [],
+				'readonly'   => $f->virtual,
 			];
 			foreach ($f->validators as $validator){
 				$fieldsdefinition['validators'][] = [
@@ -169,7 +170,7 @@ class GhostGenerator{
 			Field::TYPE_ID       => 'int',
 			Field::TYPE_FLOAT    => 'float',
 		];
-		$protectIdField = "\t\t\t->protectField('id')\n\t\t\t->noInsertField('id')\n\t\t\t->noUpdateField('id')";
+		$protectFields = [];
 		$fieldAdditions = [];
 		$fieldValidators = [];
 		$fields = [];
@@ -184,10 +185,15 @@ class GhostGenerator{
 
 		foreach ($fielddefinition as $field){
 			$fieldAdditions[] = "\t\t\t" . '->addField("' . $field['name'] . '", Field::TYPE_' . $field['type'] . ', ' . $encoder->encode($field['options'], ['whitespace' => false]) . ')';
-			if($field['type'] === Field::TYPE_GUID) $protectIdField .="\n\t\t\t->guid('".$field['name']."')";
+			if ($field['type'] === Field::TYPE_GUID) $protectFields [] = "\t\t\t->guid('" . $field['name'] . "')";
+			if ($field['readonly']) $protectFields[] = "\t\t\t->readonly('" . $field['name'] . "', ".$field['readonly'].")";
 		}
-		foreach ($fielddefinition as $field) foreach ($field['validators'] as $validator){
-			$fieldValidators[] = "\t\t\t" . '->addValidator("' . $field['name'] . '", new \\' . $validator['type'] . '(' . ( is_null($validator['options']) ? '' : $encoder->encode($validator['options'], ['whitespace' => false]) ) . '))';
+		foreach ($fielddefinition as $field){
+			if(!$field['readonly']){
+				foreach ($field['validators'] as $validator){
+					$fieldValidators[] = "\t\t\t" . '->addValidator("' . $field['name'] . '", new \\' . $validator['type'] . '(' . ( is_null($validator['options']) ? '' : $encoder->encode($validator['options'], ['whitespace' => false]) ) . '))';
+				}
+			}
 		}
 		foreach ($model->fields as $field){
 
@@ -254,7 +260,7 @@ class GhostGenerator{
 		$template = str_replace('# fields', join("\n", $fields), $template);
 		$template = str_replace('# field-additions', join("\n", $fieldAdditions), $template);
 		$template = str_replace('# field-validators', join("\n", $fieldValidators), $template);
-		$template = str_replace('# protect-id-field', $protectIdField, $template);
+		$template = str_replace('# protect-fields', join("\n", $protectFields), $template);
 
 		$finderNamesapce = GhostManager::Module()->getNamespace()['finder'];
 		$shadowNamespace = GhostManager::Module()->getNamespace()['shadow'];

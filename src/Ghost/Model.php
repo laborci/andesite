@@ -31,6 +31,8 @@ use Symfony\Component\Validator\Validation;
  * @property-read Field[]                    $fields
  * @property-read Relation[]                 $relations
  * @property-read string|null                $guid
+ * @property-read string[]                   $reloadOnInsert
+ * @property-read string[]                   $reloadOnUpdate
  */
 class Model{
 
@@ -51,6 +53,8 @@ class Model{
 	/** @var \Symfony\Component\Validator\Constraint[] */
 	private ValidatorSet $validators;
 	private ?string $guid = null;
+	private array $reloadOnInsert = [];
+	private array $reloadOnUpdate = [];
 
 	public function __construct(string $ghost, string $connection, string $table, string $storage, $mutable = true){
 		$this->connection = ConnectionFactory::Module()->get($connection);
@@ -85,20 +89,26 @@ class Model{
 		return $this;
 	}
 
-	public function noInsertField(string $field){
+	public function noInsertField(string $field):Model{
 		$this->fields[$field]->noInsert();
 		return $this;
 	}
-	public function noUpdateField(string $field){
+	public function noUpdateField(string $field):Model{
 		$this->fields[$field]->noUpdate();
 		return $this;
 	}
-	public function guid(string $field){
+	public function guid(string $field):Model{
 		if (!is_null($this->guid)) throw new \Exception('one guid field allowed');
 		$this->guid = $field;
+		return $this;
+	}
+
+	public function readonly(string $field, $mode):Model{
 		$this->protectField($field);
 		$this->noUpdateField($field);
 		$this->noInsertField($field);
+		if ($mode & Field::VIRTUAL_INSERT_RELOAD) $this->reloadOnInsert[] = $field;
+		if ($mode & Field::VIRTUAL_UPDATE_RELOAD) $this->reloadOnUpdate[] = $field;
 		return $this;
 	}
 

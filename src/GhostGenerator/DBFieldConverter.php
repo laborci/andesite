@@ -9,6 +9,7 @@ use Symfony\Component\Validator\Constraints\PositiveOrZero;
 use Symfony\Component\Validator\Constraints\Type;
 use Valentine\Date;
 
+
 class DBFieldConverter{
 
 	public $name;
@@ -20,9 +21,9 @@ class DBFieldConverter{
 	public $options = null;
 	public $phpType;
 	public $descriptor;
+	public $virtual = 0;
 
 	public function __construct($descriptor){
-
 
 		$this->descriptor = $descriptor;
 		$this->name = $descriptor['COLUMN_NAME'];
@@ -30,7 +31,27 @@ class DBFieldConverter{
 		$this->maxlength = $descriptor['CHARACTER_MAXIMUM_LENGTH'];
 		$this->nullable = $descriptor['IS_NULLABLE'] === 'YES';
 		$this->default = $descriptor['COLUMN_DEFAULT'] ?? null;
-		$this->primary = strpos($descriptor['COLUMN_KEY'], 'PRI') !== false;
+		$this->primary = stripos($descriptor['COLUMN_KEY'], 'PRI') !== false;
+
+		if (
+			stripos($descriptor['EXTRA'], 'VIRTUAL') !== false ||
+			stripos($descriptor['EXTRA'], 'CURRENT_TIMESTAMP') !== false ||
+			stripos($descriptor['COLUMN_DEFAULT'], 'CURRENT_TIMESTAMP') !== false ||
+			stripos($descriptor['COLUMN_COMMENT'], 'guid') !== false ||
+			stripos($descriptor['EXTRA'], 'auto_increment') !== false
+		) $this->virtual += Field::VIRTUAL;
+
+		if (
+			stripos($descriptor['EXTRA'], 'VIRTUAL') !== false ||
+			stripos($descriptor['COLUMN_DEFAULT'], 'CURRENT_TIMESTAMP') !== false ||
+			stripos($descriptor['COLUMN_COMMENT'], 'guid') !== false
+		) $this->virtual += Field::VIRTUAL_INSERT_RELOAD;
+
+		if (
+			stripos($descriptor['EXTRA'], 'VIRTUAL') !== false ||
+			stripos($descriptor['EXTRA'], 'CURRENT_TIMESTAMP') !== false
+		) $this->virtual += Field::VIRTUAL_UPDATE_RELOAD;
+
 
 		$this->fieldType = $this->getFieldType($descriptor);
 		$this->phpType = $this->getPhpType();
@@ -113,14 +134,18 @@ class DBFieldConverter{
 	public function getFieldType($descriptor): string{
 
 		if (strpos($descriptor['COLUMN_COMMENT'], 'json') !== false) return Field::TYPE_JSON;
-		if (strpos($descriptor['COLUMN_COMMENT'], 'guid') !== false) return Field::TYPE_GUID;
+		if (strpos($descriptor['COLUMN_COMMENT'], 'guid') !== false){
+			return Field::TYPE_GUID;
+		}
 		if ($descriptor['COLUMN_TYPE'] == 'tinyint(1)') return Field::TYPE_BOOL;
 		if (strpos($descriptor['COLUMN_TYPE'], 'int(11) unsigned') === 0 && (
 				substr($descriptor['COLUMN_NAME'], -2) == 'Id' ||
 				$descriptor['COLUMN_NAME'] == 'id' ||
-				strpos($descriptor['COLUMN_COMMENT'],'id') !== false
+				strpos($descriptor['COLUMN_COMMENT'], 'id') !== false
 			)
-		) return Field::TYPE_ID;
+		) {
+			return Field::TYPE_ID;
+		}
 
 		switch ($descriptor['DATA_TYPE']){
 			case 'date':
