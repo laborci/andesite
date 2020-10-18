@@ -120,12 +120,14 @@ class Repository{
 	public function update(Ghost $object){
 		$record = $object->decompose(Ghost::DECOMPOSE_UPDATE);
 		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->id));
+		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->getGUID()));
 		return $this->dbRepository->update($record, $object->id);
 	}
 
-	public function delete(int $id){
-		$this->cache->delete($id);
-		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $id));
+	public function delete(Ghost $object){
+		$this->cache->delete($object->id);
+		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->id));
+		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->getGUID()));
 		return $this->dbRepository->delete($id);
 	}
 

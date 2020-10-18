@@ -169,7 +169,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	public function delete(){
 		if ($this->isExists()){
 			if ($this->onBeforeDelete() === false || !static::$model->mutable) return false;
-			static::$model->repository->delete($this->id);
+			static::$model->repository->delete($this);
 			$this->deleted = true;
 			$this->onAfterDelete();
 		}
