@@ -44,7 +44,8 @@ class DBFieldConverter{
 		if (
 			stripos($descriptor['EXTRA'], 'VIRTUAL') !== false ||
 			stripos($descriptor['COLUMN_DEFAULT'], 'CURRENT_TIMESTAMP') !== false ||
-			stripos($descriptor['COLUMN_COMMENT'], 'guid') !== false
+			stripos($descriptor['COLUMN_COMMENT'], 'guid') !== false ||
+			stripos($descriptor['EXTRA'], 'auto_increment') !== false
 		) $this->virtual += Field::VIRTUAL_INSERT_RELOAD;
 
 		if (

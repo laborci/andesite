@@ -198,15 +198,19 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		if ($this->onBeforeInsert() === false) return false;
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
-		$this->reload(static::$model->reloadOnInsert);
+		$id = static::$model->repository->insert($this);
+		$this->reload(static::$model->reloadOnInsert, $id);
 		$this->onAfterInsert();
 		return $this->id;
 	}
 
-	private function reload($fields){
-		foreach($fields as $field){
-			$record = static::$model->repository->getDbRepository()->pick($this->id);
-			$this->$guid = static::$model->fields[$field]->compose($record[$field]);
+	private function reload($fields, $id = null){
+		if (is_null($id)) $id = $this->id;
+		if (count($fields)){
+			$record = static::$model->repository->getDbRepository()->pick($id);
+			foreach ($fields as $field){
+				$this->$field = static::$model->fields[$field]->compose($record[$field]);
+			}
 		}
 	}
 
