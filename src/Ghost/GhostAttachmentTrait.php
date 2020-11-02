@@ -22,18 +22,4 @@ trait GhostAttachmentTrait {
 	/** @return Collection[] */
 	public function getAttachmentCollections():array{return $this->attachmentCollections;	}
 
-//	public function getAttachmentCategoryManager($categoryName): AttachmentCategoryManager {
-//		if (!$this->isExists()) throw new \Exception('Ghost not exists yet!');
-//		/** @var Model $model */
-//		$model = static::$model;
-//		return $model->getAttachmentStorage()->getCategory($categoryName)->getCategoryManager($this);
-//	}
-//
-//	/** @return \Andesite\Attachment\AttachmentCategory[] */
-//	public function getAttachmentCategories():array{
-//		/** @var Model $model */
-//		$model = static::$model;
-//		return $model->getAttachmentStorage()->getCategories();
-//	}
-
 }

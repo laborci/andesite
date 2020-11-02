@@ -21,8 +21,7 @@ abstract class JsonResponder extends Responder {
 
 	final protected function getJsonParamBag(): ParameterBag {
 		$data = json_decode($this->getRequest()->getContent(), true);
-		$data = is_array($data) ? $data : [];
-		return new ParameterBag($data);
+		return new ParameterBag( is_array($data) ? $data : []);
 	}
 
 	protected function error($error){

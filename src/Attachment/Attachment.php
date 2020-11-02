@@ -6,14 +6,15 @@ use Symfony\Component\HttpFoundation\File\File;
 
 
 /**
- * @property-read int          $id
- * @property-read string       $url
- * @property-read string       $path
- * @property-read File         $file
- * @property-read string       $filename
- * @property-read string       $category
- * @property-read int          $sequence
- * @property-read Thumbnail    $thumbnail
+ * @property-read int $id
+ * @property-read string $url
+ * @property-read string $path
+ * @property-read File $file
+ * @property-read string $filename
+ * @property-read string $category
+ * @property-read int $sequence
+ * @property-read Thumbnail $thumbnail
+ * @property-read bool $isImage
  */
 class Attachment implements \JsonSerializable{
 
@@ -35,10 +36,11 @@ class Attachment implements \JsonSerializable{
 				return $this->handler->url . $this->file->getFilename();
 			case 'thumbnail':
 				return new Thumbnail($this->file, $this->handler->thumbnailConfig);
+			case 'isImage':
+				return str_starts_with($this->file->getMimeType(), 'image');
 		}
 	}
 	public function __isset($name){ return property_exists($this, $name) || in_array($name, ['filename', 'path', 'url', 'thumbnail']); }
-
 
 //	public function rename(string $filename){ return $this->getFilename() !== $filename ? $this->handler->renameAttachment($this, $filename) : $this; }
 
@@ -60,14 +62,14 @@ class Attachment implements \JsonSerializable{
 	public function get(string $key){ return is_null($this->meta) ? null : $this->meta->get($key); }
 
 	public function set(string $key, string $value){
-		if(!is_null($this->meta)){
+		if (!is_null($this->meta)){
 			$this->meta->set($key, $value);
 			$this->save();
 		}
 	}
 
 	public function setMeta(array $meta){
-		foreach ($meta as $key=>$value){
+		foreach ($meta as $key => $value){
 			$this->meta->set($key, $value);
 		}
 		$this->save();
@@ -90,15 +92,15 @@ class Attachment implements \JsonSerializable{
 	public function jsonSerialize(): array{ return $this->getRecord(); }
 	public function getRecord(): array{
 		return [
-			'path'        => $this->path,
-			'url'         => $this->url,
-			'file'        => $this->filename,
-			'size'        => $this->file->getSize(),
-//			'meta'        => $this->meta->get(),
-			'ordinal'     => $this->sequence,
-			'category'    => $this->category,
-			'extension'   => strtolower($this->file->getExtension()),
-			'mime-type'   => $this->file->getMimeType(),
+			'path'      => $this->path,
+			'url'       => $this->url,
+			'file'      => $this->filename,
+			'size'      => $this->file->getSize(),
+			//'meta'      => $this->meta->get(),
+			'ordinal'   => $this->sequence,
+			'category'  => $this->category,
+			'extension' => strtolower($this->file->getExtension()),
+			'mime-type' => $this->file->getMimeType(),
 		];
 	}
 }
