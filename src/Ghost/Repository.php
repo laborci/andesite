@@ -128,7 +128,7 @@ class Repository{
 		$this->cache->delete($object->id);
 		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->id));
 		Memcache::Module()->del('ghost/' . md5($this->model->ghost . '/' . $object->getGUID()));
-		return $this->dbRepository->delete($id);
+		return $this->dbRepository->delete($object->id);
 	}
 
 	public function search(Filter $filter = null): Finder{
