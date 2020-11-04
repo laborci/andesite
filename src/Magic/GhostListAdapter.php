@@ -13,6 +13,8 @@ class GhostListAdapter implements ListAdapterInterface{
 	private $quickSearchFilterCreator;
 	/** @var callable */
 	private $searchFilterCreator;
+	/** @var callable */
+	private $baseFilterCreator;
 	/** @var array|string[] */
 	private array $quickSearchFields;
 	/** @var callable */
@@ -23,6 +25,11 @@ class GhostListAdapter implements ListAdapterInterface{
 		$this->quickSearchFields = $quickSearchFields;
 	}
 
+	/** @return $this */
+	public function setBaseFilterCreator(callable $func){
+		$this->baseFilterCreator = $func;
+		return $this;
+	}
 	/** @return $this */
 	public function setSearchFilterCreator(callable $func){
 		$this->searchFilterCreator = $func;
@@ -48,7 +55,9 @@ class GhostListAdapter implements ListAdapterInterface{
 	 * @return array['page'=>int, 'count' => int, 'items' => array]
 	 */
 	public function get($quickSearch, $search, $sort, $page, $pageSize): array{
-		$filter = Filter::where("1=1")->and($this->quickSearch($quickSearch))->and($this->search($search));
+		/** @var Filter $baseFilter */
+		$baseFilter = is_null($this->baseFilterCreator) ? Filter::where("1=1") : ($this->baseFilterCreator)();
+		$filter = $baseFilter->and($this->quickSearch($quickSearch))->and($this->search($search));
 		$ghost = $this->ghost;
 		$items = $ghost::search($filter)->orderIf($sort, $sort)->collectPage($pageSize, $page, $count);
 		if (count($items) === 0 && $count > 0){

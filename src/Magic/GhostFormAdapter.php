@@ -16,6 +16,11 @@ class GhostFormAdapter implements FormAdapterInterface{
 		return new $this->ghost();
 	}
 
+	public function setImport(callable $import){
+		$this->import = $import;
+		return $this;
+	}
+
 	public function setExport(callable $export){
 		$this->export = $export;
 		return $this;
@@ -30,7 +35,7 @@ class GhostFormAdapter implements FormAdapterInterface{
 		$item = $id === '' ? $this->createBlankItem() : ( $this->ghost )::pick(intval($id));
 		return [
 			'id'    => $id,
-			'item'  => is_null($this->export) ? $item->export() : ( $this->export )($item),
+			'item'  => is_null($this->export) ? $item->export() : ($this->export)($item),
 			'props' => is_null($this->props) ? [] : ( $this->props )($item),
 		];
 	}
@@ -39,6 +44,8 @@ class GhostFormAdapter implements FormAdapterInterface{
 		$item = $id === '' ? $item = new $this->ghost() : ( $this->ghost )::pick($id);
 		if (is_null($this->import)){
 			$item->import($data);
+		}else{
+			($this->import)($item, $data);
 		}
 		return $item->save();
 	}
