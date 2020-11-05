@@ -2,6 +2,7 @@
 
 use Minime\Annotations\Reader;
 
+
 abstract class GMark{
 
 	private $commands = [];
@@ -68,9 +69,15 @@ abstract class GMark{
 			if (!is_null($block['command'])){
 				$method = $block['command']['method'];
 				$output[] = $this->$method($block['command']['as'], $block['body'], ...$block['params']);
+			}else{
+				$output[] = $this->defaultParser($block['body']);
 			}
 		}
 		return $this->joinBlocks($output);
+	}
+
+	protected function defaultParser($block){
+		return $block;
 	}
 
 	protected function joinBlocks($blocks){ return join("\n", $blocks); }
