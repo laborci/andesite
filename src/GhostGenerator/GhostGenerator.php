@@ -17,6 +17,7 @@ use Application\Ghost\Article;
 use Application\Ghost\Article2;
 use Application\Ghosts;
 use CaseHelper\CamelCaseHelper;
+use CaseHelper\CaseHelperFactory;
 use CaseHelper\PascalCaseHelper;
 use CaseHelper\SnakeCaseHelper;
 use CaseHelper\Test\Unit\CaseHelper\SpaceCaseInputTest;
@@ -182,11 +183,23 @@ class GhostGenerator{
 		$virtuals = [];
 		$abstracts = [];
 		$relations = [];
+		$collectionNames = [];
+		$ghostDescriptor = [
+			'fields' => [],
+			'attachments'=>[],
+			'relations'=>[],
+		];
 
 		foreach ($fielddefinition as $field){
 			$fieldAdditions[] = "\t\t\t" . '->addField("' . $field['name'] . '", Field::TYPE_' . $field['type'] . ', ' . $encoder->encode($field['options'], ['whitespace' => false]) . ')';
 			if ($field['type'] === Field::TYPE_GUID) $protectFields [] = "\t\t\t->guid('" . $field['name'] . "')";
 			if ($field['readonly']) $protectFields[] = "\t\t\t->readonly('" . $field['name'] . "', ".$field['readonly'].")";
+			$ghostDescriptor['fields'][$field['name']] = [
+				'name'=>$field['name'],
+				'type'=>$field['type'],
+				'readonly'=>$field['readonly'] ? $field['readonly'] : false,
+				'options'=>$field['options']
+			];
 		}
 		foreach ($fielddefinition as $field){
 			if(!$field['readonly']){
@@ -220,6 +233,14 @@ class GhostGenerator{
 
 		foreach ($model->attachmentStorage->categories as $category){
 			$collections[] = " * @property-read Collection $" . $category->name;
+			$collectionNames[] =  "\t" . 'const attachment_colection__' . $category->name . ' = "' . $category->name . '";';
+			$ghostDescriptor['attachments'][$category->name] = [
+				'name'=>$category->name,
+				'extensions'=>$category->acceptedExtensions,
+				'maxFileCount'=>$category->maxFileCount,
+				'maxFileSize'=>$category->maxFileSize,
+				'meta'=>$category->metaDefinition ? $category->metaDefinition->getFields() : null
+			];
 		}
 
 		foreach ($model->virtuals as $field){
@@ -233,6 +254,11 @@ class GhostGenerator{
 		}
 
 		foreach ($model->relations as $relation){
+			$ghostDescriptor['relations'] = [
+				'name'=>$relation->name,
+				'descriptor'=>$relation->descriptor,
+				'type'=>$relation->type
+			];
 			switch ($relation->type){
 				case Relation::TYPE_BELONGSTO:
 					$relations[] = ' * @property-read \\' . $relation->descriptor['ghost'] . ' $' . $relation->name;
@@ -261,6 +287,7 @@ class GhostGenerator{
 		$template = str_replace('# field-additions', join("\n", $fieldAdditions), $template);
 		$template = str_replace('# field-validators', join("\n", $fieldValidators), $template);
 		$template = str_replace('# protect-fields', join("\n", $protectFields), $template);
+		$template = str_replace('# collection-names', join("\n", $collectionNames), $template);
 
 		$finderNamesapce = GhostManager::Module()->getNamespace()['finder'];
 		$shadowNamespace = GhostManager::Module()->getNamespace()['shadow'];
@@ -272,5 +299,8 @@ class GhostGenerator{
 		$shadowPath = realpath(CodeFinder::Service()->Psr4ResolveNamespace($shadowNamespace));
 
 		file_put_contents($shadowPath . '/__' . $name . '.php', $template);
+		if(!is_dir($shadowPath . '/../descriptors/')) mkdir($shadowPath . '/../descriptors/', 0777);
+		file_put_contents($shadowPath . '/../descriptors/' . (new PascalCaseHelper())->toKebabCase($name) . '.json', json_encode($ghostDescriptor, JSON_PRETTY_PRINT+ JSON_UNESCAPED_SLASHES+ JSON_UNESCAPED_UNICODE));
+		file_put_contents($shadowPath . '/../descriptors/' . (new PascalCaseHelper())->toKebabCase($name) . '.js', 'let '.$name.' = '.json_encode($ghostDescriptor, JSON_PRETTY_PRINT+ JSON_UNESCAPED_SLASHES+ JSON_UNESCAPED_UNICODE).";\nexport default ".$name.';');
 	}
 }

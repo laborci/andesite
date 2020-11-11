@@ -27,6 +27,8 @@ abstract class __{{name}} extends Ghost{
 
 # fields
 
+# collection-names
+
 	static protected function model(Model $model): Model{
 		return $model
 # field-additions

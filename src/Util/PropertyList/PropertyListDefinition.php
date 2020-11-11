@@ -16,6 +16,8 @@ class PropertyListDefinition{
 		];
 	}
 
+	public function getFields(){return $this->fields;}
+
 	public function hasKey($key){ return array_key_exists($key, $this->fields); }
 	public function getOptions($key){ return array_key_exists($key, $this->fields) ? $this->fields[$key]['options'] : null; }
 	public function getDefault($key){ return array_key_exists($key, $this->fields) ? $this->fields[$key]['default'] : null; }
