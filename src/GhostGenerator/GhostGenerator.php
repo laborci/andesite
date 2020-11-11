@@ -301,6 +301,6 @@ class GhostGenerator{
 		file_put_contents($shadowPath . '/__' . $name . '.php', $template);
 		if(!is_dir($shadowPath . '/../descriptors/')) mkdir($shadowPath . '/../descriptors/', 0777);
 		file_put_contents($shadowPath . '/../descriptors/' . (new PascalCaseHelper())->toKebabCase($name) . '.json', json_encode($ghostDescriptor, JSON_PRETTY_PRINT+ JSON_UNESCAPED_SLASHES+ JSON_UNESCAPED_UNICODE));
-		file_put_contents($shadowPath . '/../descriptors/' . (new PascalCaseHelper())->toKebabCase($name) . '.js', 'let '.$name.' = '.json_encode($ghostDescriptor, JSON_PRETTY_PRINT+ JSON_UNESCAPED_SLASHES+ JSON_UNESCAPED_UNICODE).";\nexport default ".$name.';');
+		file_put_contents($shadowPath . '/../descriptors/' . (new PascalCaseHelper())->toKebabCase($name) . '.js', 'let '.(new PascalCaseHelper())->toCamelCase($name).' = '.json_encode($ghostDescriptor, JSON_PRETTY_PRINT+ JSON_UNESCAPED_SLASHES+ JSON_UNESCAPED_UNICODE).";\nexport default ".(new PascalCaseHelper())->toCamelCase($name).';');
 	}
 }

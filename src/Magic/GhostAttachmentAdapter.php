@@ -76,8 +76,9 @@ class GhostAttachmentAdapter implements AttachmentAdapterInterface{
 	}
 
 	protected function get(){
+		$collections = $this->request->request->get('collections');
 		$attachments = [];
-		foreach ($this->collections as $collection){
+		foreach ($collections as $collection){
 			$attachments[$collection] = [];
 			foreach ($this->item->getAttachmentCollection($collection) as $file){
 				$data = $file->jsonSerialize();
