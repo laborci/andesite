@@ -1,5 +1,7 @@
 <?php namespace Andesite\Magic;
 
+use Andesite\Attachment\Category;
+use Andesite\Attachment\Collection;
 use Andesite\Core\Env\Env;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -15,14 +17,12 @@ class GhostAttachmentAdapter implements AttachmentAdapterInterface{
 	private $ghost;
 	/** @var \Andesite\Ghost\Ghost */
 	private $item;
-	private $collections;
 	private Request $request;
 	private Response $response;
 	private ParameterBag $jsonParamBag;
 
-	public function __construct($ghost, $collections){
+	public function __construct($ghost){
 		$this->ghost = $ghost;
-		$this->collections = $collections;
 	}
 
 	public function handle(string $action, Request $request, Response $response){
@@ -76,7 +76,7 @@ class GhostAttachmentAdapter implements AttachmentAdapterInterface{
 	}
 
 	protected function get(){
-		$collections = $this->request->request->get('collections');
+		$collections = $this->request->request->get('collections', array_keys($this->ghost::$model->attachmentStorage->categories));
 		$attachments = [];
 		foreach ($collections as $collection){
 			$attachments[$collection] = [];
