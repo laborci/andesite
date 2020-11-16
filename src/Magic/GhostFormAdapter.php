@@ -5,7 +5,7 @@ class GhostFormAdapter implements FormAdapterInterface{
 	/** @var \Andesite\Ghost\Ghost */
 	private $ghost;
 	private $export = null;
-	private $props = null;
+	private $attributes = null;
 	private $import = null;
 
 	public function __construct($ghost){
@@ -26,8 +26,8 @@ class GhostFormAdapter implements FormAdapterInterface{
 		return $this;
 	}
 
-	public function setProps(callable $props){
-		$this->props = $props;
+	public function setAttributes(callable $attributes){
+		$this->attributes = $attributes;
 		return $this;
 	}
 
@@ -36,7 +36,7 @@ class GhostFormAdapter implements FormAdapterInterface{
 		return [
 			'id'    => $id,
 			'item'  => is_null($this->export) ? $item->export() : ($this->export)($item),
-			'props' => is_null($this->props) ? [] : ( $this->props )($item),
+			'attributes' => is_null($this->attributes) ? [] : ( $this->attributes )($item),
 		];
 	}
 
