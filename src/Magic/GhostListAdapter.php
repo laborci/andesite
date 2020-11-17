@@ -59,7 +59,12 @@ class GhostListAdapter implements ListAdapterInterface{
 		$baseFilter = is_null($this->baseFilterCreator) ? Filter::where("1=1") : ($this->baseFilterCreator)();
 		$filter = $baseFilter->and($this->quickSearch($quickSearch))->and($this->search($search));
 		$ghost = $this->ghost;
-		$items = $ghost::search($filter)->orderIf($sort, $sort)->collectPage($pageSize, $page, $count);
+		$query = $ghost::search($filter);
+		if(is_array($sort)) foreach ($sort as $field=>$direction){
+			$query->descIf($direction === 'desc', $field);
+			$query->ascIf($direction === 'asc', $field);
+		}
+		$items = $query->collectPage($pageSize, $page, $count);
 		if (count($items) === 0 && $count > 0){
 			$page = ceil($count / $pageSize);
 			$items = $ghost::search($filter)->collectPage($pageSize, $page, $count);
