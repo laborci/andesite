@@ -25,7 +25,7 @@ class ModuleInstance{
 			$this->load = $reflection->getMethod('load');
 			$params = $reflection->getMethod('load')->getParameters();
 			foreach ($params as $param){
-				$this->dependencies[$param->getClass()->name] = $param->isOptional();
+				$this->dependencies[$param->getType()->getName()] = $param->isOptional();
 			}
 		}
 

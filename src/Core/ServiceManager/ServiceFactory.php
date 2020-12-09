@@ -33,7 +33,7 @@ class ServiceFactory{
 			}else{
 				$constructor = $reflection->getConstructor();
 				$arguments = is_null($constructor) ? [] : array_map(function (\ReflectionParameter $parameter){
-					return ServiceContainer::get($parameter->getClass()->name);
+					return ServiceContainer::get($parameter->getType()->getName());
 				}, $constructor->getParameters());
 				$service = new $class(...$arguments);
 			}
