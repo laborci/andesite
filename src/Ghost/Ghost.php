@@ -184,7 +184,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $id;
 	}
 
-	final private function update(){
+	private function update(){
 		if ($this->onBeforeUpdate() === false) return false;
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);
@@ -194,7 +194,7 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 		return $this->id;
 	}
 
-	final private function insert(){
+	private function insert(){
 		if ($this->onBeforeInsert() === false) return false;
 		$errors = $this->validate(false);
 		if (count($errors)) throw new ValidationError($errors);

@@ -32,7 +32,7 @@ class ThumbnailResponder extends PageResponder{
 		}
 		$op = array_pop($parts);
 		$file = join('.', $parts);
-		$path = $config['source'] . '/' . preg_replace("/-/", '/', $pathId) . '/' . $file;
+		$path = realpath($config['source'] . '/' . preg_replace("/-/", '/', $pathId) . '/' . $file);
 
 		$url = $file . '.' . $op . ( ( $jpegquality ) ? ( '.' . $jpegquality ) : ( '' ) ) . '.' . $pathId . '.' . $ext;
 		$newHash = base_convert(crc32($url . $config['secret']), 10, 32);
@@ -44,8 +44,12 @@ class ThumbnailResponder extends PageResponder{
 
 
 
+
+		dump($path);
+		dump($newHash);
+		dump($hash);
 		if ($newHash != $hash || !file_exists($path)){
-			// TODO: 404
+			// TODO: 40
 			die('404');
 		}
 

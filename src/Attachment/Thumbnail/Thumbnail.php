@@ -159,8 +159,8 @@ class Thumbnail{
 			$op .= '.' . base_convert(floor($this->jpegQuality / 4), 10, 32);
 		}
 
-		$url = urlencode($this->file->getFilename()) . '.' . $op . '.' . $this->pathId;
-		$url = $this->urlBase . '/' . $url . '.' . base_convert(crc32($url . '.' . $ext . $this->secret), 10, 32) . '.' . $ext;
+		$url = $this->file->getFilename() . '.' . $op . '.' . $this->pathId;
+		$url = $this->urlBase . '/' . urlencode($url) . '.' . base_convert(crc32($url . '.' . $ext . $this->secret), 10, 32) . '.' . $ext;
 
 		return $url;
 	}
