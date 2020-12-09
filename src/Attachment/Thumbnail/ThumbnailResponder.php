@@ -42,12 +42,6 @@ class ThumbnailResponder extends PageResponder{
 		$this->source = $path;
 		$this->ext = $ext;
 
-
-
-
-		dump($path);
-		dump($newHash);
-		dump($hash);
 		if ($newHash != $hash || !file_exists($path)){
 			// TODO: 40
 			die('404');

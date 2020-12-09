@@ -16,6 +16,9 @@ abstract class Handler extends ApiJsonResponder{
 		}catch (ValidationError $e){
 			$this->getResponse()->setStatusCode(400);
 			return $e->getMessages();
+		}catch (\PDOException $e){
+			$this->getResponse()->setStatusCode(400);
+			return [['field'=>'ERROR', 'message'=>$e->errorInfo[2]]];
 		}
 	}
 
