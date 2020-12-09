@@ -30,9 +30,9 @@ class PDOConnection extends \PDO{
 	/** @var SqlLogInterface */
 	protected $sqlLogger;
 
-	public function query($statement, $mode = \PDO::ATTR_DEFAULT_FETCH_MODE, $arg3 = null, array $ctorargs = []){
-		if (!is_null($this->sqlLogger)) $this->sqlLogger->logSql($statement);
-		return parent::query($statement);
+	public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs){
+		if (!is_null($this->sqlLogger)) $this->sqlLogger->logSql($query);
+		return parent::query($query);
 	}
 
 	public function quoteValue($subject, bool $addQuotationMarks = true): string{ return $subject === null ? 'NULL' : ( $addQuotationMarks ? $this->quote($subject) : trim($this->quote($subject), "'") ); }

@@ -33,7 +33,7 @@ class Attachment implements \JsonSerializable{
 			case 'path':
 				return $this->file->getRealPath();
 			case 'url':
-				return $this->handler->url . $this->file->getFilename();
+				return $this->handler->url . urlencode($this->file->getFilename());
 			case 'thumbnail':
 				return new Thumbnail($this->file, $this->handler->thumbnailConfig);
 			case 'isImage':

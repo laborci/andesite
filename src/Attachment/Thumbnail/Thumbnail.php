@@ -159,7 +159,7 @@ class Thumbnail{
 			$op .= '.' . base_convert(floor($this->jpegQuality / 4), 10, 32);
 		}
 
-		$url = $this->file->getFilename() . '.' . $op . '.' . $this->pathId;
+		$url = urlencode($this->file->getFilename()) . '.' . $op . '.' . $this->pathId;
 		$url = $this->urlBase . '/' . $url . '.' . base_convert(crc32($url . '.' . $ext . $this->secret), 10, 32) . '.' . $ext;
 
 		return $url;

@@ -20,7 +20,7 @@ class ErrorHandler{
 
 		if ($exceptionHandler){
 			set_exception_handler([$exceptionHandler, 'handleException']);
-			set_error_handler([$errorHandler, 'handleError']);
+			set_error_handler([$errorHandler, 'handleError'],E_ALL);
 			//set_error_handler(function ($severity, $message, $file, $line){	throw new \ErrorException($message, $severity, $severity, $file, $line); });
 		}
 
