@@ -18,7 +18,7 @@ abstract class Handler extends ApiJsonResponder{
 			return $e->getMessages();
 		}catch (\PDOException $e){
 			$this->getResponse()->setStatusCode(400);
-			return [['field'=>'ERROR', 'message'=>$e->errorInfo[2]]];
+			return [['field'=>'DB ERROR', 'message'=>$e->errorInfo[2]]];
 		}
 	}
 

@@ -2,28 +2,23 @@
 
 use Andesite\Attachment\Attachment;
 use Andesite\Attachment\Collection;
+use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
 use Andesite\Core\ServiceManager\ServiceContainer;
 use Andesite\DBAccess\Connection\Filter\Comparison;
-use Andesite\Ghost\Exception\ValidationError;
-use Andesite\Util\Memcache\Memcache;
-use Application\Ghost\Article;
-use JsonSerializable;
-use Andesite\Attachment\Interfaces\AttachmentOwnerInterface;
 use Andesite\Ghost\Exception\InsufficientData;
+use Andesite\Ghost\Exception\ValidationError;
+use JsonSerializable;
 use Minime\Annotations\Reader;
-use Rah\Danpu\Dump;
 use Symfony\Component\Validator\Validation;
 
-
 /**
- * @property-read int        id
+ * @property-read int id
  * @property-read Model|null $model
  */
 abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 
 	use GhostRepositoryFacadeTrait;
 	use GhostAttachmentTrait;
-
 
 	private $deleted;
 	private $attachmentCollections = [];
@@ -149,7 +144,13 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	public function export(){
 		$record = [];
 		foreach (static::$model->fields as $fieldName => $field){
-			$record[$fieldName] = $field->export($this->$fieldName);
+			if ($field->protected){
+				if ($field->getter !== false){
+					$record[$fieldName] = $field->export($this->__get($fieldName));
+				}
+			}else{
+				$record[$fieldName] = $field->export($this->$fieldName);
+			}
 		}
 		return $record;
 	}
@@ -157,7 +158,13 @@ abstract class Ghost implements JsonSerializable, AttachmentOwnerInterface{
 	public function import($data){
 		foreach (static::$model->fields as $fieldName => $field){
 			if (array_key_exists($fieldName, $data)){
-				$this->$fieldName = $field->import($data[$fieldName]);
+				if ($field->protected){
+					if ($field->getter !== false){
+						$this->__set($fieldName, $field->import($data[$fieldName]));
+					}
+				}else{
+					$this->$fieldName = $field->import($data[$fieldName]);
+				}
 			}
 		}
 		return $this;
