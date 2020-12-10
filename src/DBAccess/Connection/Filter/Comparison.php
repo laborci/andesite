@@ -15,6 +15,7 @@ class Comparison{
 	const OPERATOR_IS_NOT_NULL = 'is_not_null';
 	const OPERATOR_NOT_EQUAL = 'not_equal';
 	const OPERATOR_IN = 'in';
+	const OPERATOR_NOT_IN = 'not_in';
 	const OPERATOR_IN_STRING = 'instring';
 	const OPERATOR_LIKE = 'like';
 	const OPERATOR_REV_LIKE = 'revlike';
@@ -66,6 +67,9 @@ class Comparison{
 				break;
 			case self::OPERATOR_NOT_EQUAL:
 				$sql = "${field} != {$this->quoteValue($this->value, $connection)}";
+				break;
+			case self::OPERATOR_NOT_IN:
+				$sql = (empty($this->value) ? "" : "${field} NOT IN (" . join(',', $this->quoteArray($this->value, $connection)) . ")");
 				break;
 			case self::OPERATOR_IN:
 				$sql = (empty($this->value) ? "" : "${field} IN (" . join(',', $this->quoteArray($this->value, $connection)) . ")");
@@ -120,6 +124,11 @@ class Comparison{
 
 	public function in(array $value){
 		$this->operator = self::OPERATOR_IN;
+		$this->value = $value;
+		return $this;
+	}
+	public function notIn(array $value){
+		$this->operator = self::OPERATOR_NOT_IN;
 		$this->value = $value;
 		return $this;
 	}
