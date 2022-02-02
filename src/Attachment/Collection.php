@@ -8,11 +8,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * @property-read \Andesite\Attachment\Attachment|null $first
- * @property-read \Andesite\Attachment\Category        $category
- * @property-read int                                  $count
- * @property-read \Andesite\Attachment\Attachment[]    $array
+ * @property-read \Andesite\Attachment\Category $category
+ * @property-read int $count
+ * @property-read \Andesite\Attachment\Attachment[] $array
+ * @property-read string $url
  */
-class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
+class Collection implements \IteratorAggregate, \ArrayAccess, \Countable {
 
 	/** @var \Andesite\Attachment\Attachment[] */
 	private ?array $attachments = null;
@@ -21,20 +22,20 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
 	private Category $category;
 	private AttachmentOwnerInterface $owner;
 
-	public function __construct(AttachmentOwnerInterface $owner, Storage $storage, Category $category){
+	public function __construct(AttachmentOwnerInterface $owner, Storage $storage, Category $category) {
 		$this->category = $category;
 		$this->owner = $owner;
 		$this->handler = new CollectionHandler($this, $storage, $category, $owner);
 	}
 
-	public function addFile(File $file): ?Attachment{
+	public function addFile(File $file): ?Attachment {
 		$attachment = $this->handler->addFile($file);
 		$this->owner->onAttachmentAdded($this, $attachment);
 		$this->load();
 		return $attachment;
 	}
 
-	public function removeAttachment(Attachment $attachment){
+	public function removeAttachment(Attachment $attachment) {
 		$this->handler->removeAttachment($attachment);
 		$this->owner->onAttachmentRemoved($this);
 	}
@@ -43,31 +44,31 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
 	 * @param callable $filter
 	 * @return Attachment[]
 	 */
-	public function filter(callable $filter):array{
+	public function filter(callable $filter): array {
 		$this->lazyLoad();
 		$result = [];
-		foreach ($this->attachments as $attachment) if($filter($attachment)) $result[] = $filter;
+		foreach ($this->attachments as $attachment) if ($filter($attachment)) $result[] = $filter;
 		return $result;
 	}
 
 	// Loading collection
 
-	protected function lazyLoad(): bool{ return ( !is_null($this->attachments) ?: $this->load() ) && false; }
-	public function load(){ $this->attachments = $this->handler->all($this); }
+	protected function lazyLoad(): bool { return (!is_null($this->attachments) ?: $this->load()) && false; }
+	public function load() { $this->attachments = $this->handler->all($this); }
 
-	protected function getFirstAttachment(): ?Attachment{ return $this->lazyLoad() ?: ( $this->count() ? $this->attachments[0] : null ); }
-	public function get($filename){
+	protected function getFirstAttachment(): ?Attachment { return $this->lazyLoad() ?: ($this->count() ? $this->attachments[0] : null); }
+	public function get($filename) {
 		$this->lazyLoad();
-		foreach ($this->attachments as $attachment){
-			if($attachment->filename === $filename) return $attachment;
+		foreach ($this->attachments as $attachment) {
+			if ($attachment->filename === $filename) return $attachment;
 		}
 		return null;
 	}
 	// Getters
 
-	public function __isset($name){ return in_array($name, ['array', 'count', 'first', 'category']); }
-	public function __get($key){
-		switch ($key){
+	public function __isset($name) { return in_array($name, ['array', 'count', 'first', 'category', 'url']); }
+	public function __get($key) {
+		switch ($key) {
 			case 'array':
 				return $this->attachments;
 			case 'count':
@@ -76,34 +77,36 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Countable{
 				return $this->getFirstAttachment();
 			case 'category':
 				return $this->category;
+			case 'url':
+				return $this->handler->url;
 		}
 	}
 
-	function __toString():string{ return $this->category->name; }
+	function __toString(): string { return $this->category->name; }
 
 	// Array Behaviour
 
 	// IteratorAggregate
 	/** @return AttachmentIterator */
-	public function getIterator(): ArrayIterator{ return $this->lazyLoad() ?: new ArrayIterator($this->attachments); }
+	public function getIterator(): ArrayIterator { return $this->lazyLoad() ?: new ArrayIterator($this->attachments); }
 
 	// Countable
-	public function count(){ return $this->lazyLoad() ?: count($this->attachments); }
+	public function count() { return $this->lazyLoad() ?: count($this->attachments); }
 
 	// ArrayAccess
 	/** @return \Andesite\Attachment\Attachment */
-	public function offsetGet($offset){
-		if(is_numeric($offset)) return $this->lazyLoad() ?: $this->attachments[$offset];
+	public function offsetGet($offset) {
+		if (is_numeric($offset)) return $this->lazyLoad() ?: $this->attachments[$offset];
 		return $this->__get($offset);
 	}
-	public function offsetExists($offset){
-		if(is_numeric($offset)) return $this->lazyLoad() ?:  array_key_exists($offset, $this->attachments);
+	public function offsetExists($offset) {
+		if (is_numeric($offset)) return $this->lazyLoad() ?: array_key_exists($offset, $this->attachments);
 		return $this->__isset($offset);
 	}
 	/** @deprecated OUT OF ORDER */
-	public function offsetSet($offset, $value){ }
+	public function offsetSet($offset, $value) { }
 	/** @deprecated OUT OF ORDER */
-	public function offsetUnset($offset){ }
+	public function offsetUnset($offset) { }
 
 }
 

@@ -106,6 +106,7 @@ abstract class AbstractAuth implements SharedService, AuthInterface{
 	}
 
 	public function clearAutologin(): void{
+		/** @var Response $response */
 		$response = ServiceContainer::get(Response::class);
 		$response->headers->clearCookie($this->autologinCookie);
 	}
